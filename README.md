@@ -1,2 +1,3 @@
-# datascience-capstone-project
-Repository for the data-science capstone project
+README
+======
+README for the data-science capstone project.
