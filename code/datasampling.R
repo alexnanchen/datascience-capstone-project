@@ -82,4 +82,4 @@ for (lang in LANGUAGES) {
     }
 } 
 
-rm(fileName, srcFile, destFile)
+rm(fileName, srcFile, destFile, df, dfSelected)

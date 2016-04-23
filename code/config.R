@@ -13,7 +13,7 @@ SAMPLEDIR  = normalizePath(sprintf("%s/%s", PROJECTDIR, "../sample"))
 ####################
 # General constants
 #
-LANGUAGES  = c("en_US", "de_DE", "fi_FI", "ru_RU")
+LANGUAGES  = c("en_US")
 SOURCES    = c("twitter", "news", "blogs")
 
 rm(scriptDir)

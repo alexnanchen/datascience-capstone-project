@@ -1,0 +1,89 @@
+---
+title: "Exploratory data analysis"
+author: "Alexandre Nanchen"
+date: "23 April 2016"
+output:
+  html_document:
+    fig_caption: yes
+    keep_md: yes
+  pdf_document: default
+kfigr: prefix:True
+---
+
+```{r echo=FALSE, results="hide", message=FALSE}
+    require(knitr)
+    library(kfigr)
+    require(dplyr)
+    require(ggplot2)
+    require(graphics)
+    
+    opts_chunk$set(echo=TRUE)
+```
+
+# Synopsis
+
+
+# Data selection
+First the data is downloaded from the course web site and unziped.
+The current document will be focused on the **en_US** texts.
+
+Some of the scripts are too long to be show. You can find them on my 
+[Capstone git repository](https://github.com/alexnanchen/datascience-capstone-project.git)
+
+### Dataset statistics
+```{r, echo=F}
+df <- data.frame(DataSet=c("Twitter", "News", "Blogs"), 
+                 Number.lines=c(2360148,1010242,899288), Number.words=c(30374206,34372720,37334690))
+kable(df,row.names = F, format.args=list(big.mark = "'"))
+```
+
+In total, **`r format(4269678,big.mark="'")`** lines **`r format(102081616,big.mark="'")`** words.
+
+### Data sampling
+The purpose of the data sampling is to select a representative subset of the 100 Mio words trying to avoid a potential
+bias.
+
+A divide and conquer method associated with random sampling has been chosen:
+
+1. Load all sentences having more than 3 words and less than 50 words.
+1. Choose the total amount of lines for the subset, in our case 1.5 Mio (500'000 per source)
+2. Subsample sentences from the available sources: twitter, blogs and news using the following algorithm:
+    - For the given data source, compute sentence words length density
+    - Use this density to randomly select the appropriate amount of sentences for each class
+
+The script use to do the sampling is called *datasampling.R*.
+
+Here are the *sample* statistics:
+```{r, echo=F}
+df <- data.frame(DataSet=c("Twitter", "News", "Blogs"), 
+                 Number.lines=c(499981,499978,499976), Number.words=c(7072828,13814866,10325342))
+kable(df,row.names = F, format.args=list(big.mark = "'"))
+```
+
+In total, **`r format(1499935,big.mark="'")`** lines **`r format(31213036,big.mark="'")`** words.
+
+# Data preparation
+The data preparation has been performed with the *datapreparation.R* script.
+
+### Filtering
+In the filtering step, sentences with more than 3 groups of digits have been removed.
+For example.
+
+### Cleaning
+In the cleaning step, the following operation have been performed:
+
+1. 
+
+
+# Exploratory data analysis
+### N gram frequencies
+http://edutechwiki.unige.ch/fr/Tutoriel_tm_text_mining_package
+
+### Word selection
+
+### Foreign words
+
+```{r, echo=F}
+
+```
+
