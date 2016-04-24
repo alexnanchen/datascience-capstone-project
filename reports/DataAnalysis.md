@@ -4,6 +4,8 @@ Alexandre Nanchen
 
 
 
+
+
 # Synopsis
 
 
@@ -38,32 +40,54 @@ A divide and conquer method associated with random sampling has been chosen:
 
 The script use to do the sampling is called *datasampling.R*.
 
-Here are the *sample* statistics:
-
-DataSet    Number.lines   Number.words
---------  -------------  -------------
-Twitter         499'981      7'072'828
-News            499'978     13'814'866
-Blogs           499'976     10'325'342
-
 In total, **1'499'935** lines **31'213'036** words.
 
 # Data preparation
 The data preparation has been performed with the *datapreparation.R* script.
 
-### Filtering
-In the filtering step, sentences with more than 3 groups of digits have been removed.
-For example.
+The following transformations have been applied to the data sample:
 
-### Cleaning
-In the cleaning step, the following operation have been performed:
+#### Special characters replacements
+Emoticons, control characters, special utf-8 characters
+```
+#Emoticons replacement
+strText <- mapUtf8Characters(strText, EMOTICONSMAP)
 
-1. 
+#Control characters replacement
+strText <- mapUtf8Characters(strText, CONTROLMAP)
 
+#Utf-8 characters replacement
+strText <- mapUtf8Characters(strText, UTF8MAP)
+```
+
+#### Text normalization
+Lowercasing, numbers removal,punctuation removal, white space normalization, offensive words removal
+```
+c <- VCorpus(VectorSource(strText))
+c <- tm_map(c, tolower)
+c <- tm_map(c, removeNumbers)
+c <- tm_map(c, removePunctuation)
+c <- tm_map(c, stripWhitespace)
+c <- tm_map(c, PlainTextDocument)
+c <- tm_map(c, removeWords, offensiveWords)
+```
 
 # Exploratory data analysis
+
+The exploratory data analysis will be performed on **2'928** sentences.
+
 ### N gram frequencies
 http://edutechwiki.unige.ch/fr/Tutoriel_tm_text_mining_package
+
+#### Unigrams
+Here is a word cloud of words occurring more than 50 times.
+![](DataAnalysis_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+
+#### Bigrams - trigrams - 4-grams
+
+```
+## [1] 53313
+```
 
 ### Word selection
 

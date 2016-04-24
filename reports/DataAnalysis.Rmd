@@ -16,8 +16,22 @@ kfigr: prefix:True
     require(dplyr)
     require(ggplot2)
     require(graphics)
+    require(tm)
+    require(wordcloud)
+    require(RWeka)
     
+    opts_knit$set(root.dir="../")
     opts_chunk$set(echo=TRUE)
+    
+```
+
+```{r echo=FALSE}
+readSample <- function(fileName) {
+    cat("Reading ", fileName,"\n")
+    df <- tbl_df(read.table(fileName,allowEscapes = T)) %>%
+             rename(text=V1, wordCount = V2)
+    return(df)
+}
 ```
 
 # Synopsis
@@ -53,31 +67,74 @@ A divide and conquer method associated with random sampling has been chosen:
 
 The script use to do the sampling is called *datasampling.R*.
 
-Here are the *sample* statistics:
-```{r, echo=F}
-df <- data.frame(DataSet=c("Twitter", "News", "Blogs"), 
-                 Number.lines=c(499981,499978,499976), Number.words=c(7072828,13814866,10325342))
-kable(df,row.names = F, format.args=list(big.mark = "'"))
-```
-
 In total, **`r format(1499935,big.mark="'")`** lines **`r format(31213036,big.mark="'")`** words.
 
 # Data preparation
 The data preparation has been performed with the *datapreparation.R* script.
 
-### Filtering
-In the filtering step, sentences with more than 3 groups of digits have been removed.
-For example.
+The following transformations have been applied to the data sample:
 
-### Cleaning
-In the cleaning step, the following operation have been performed:
+#### Special characters replacements
+Emoticons, control characters, special utf-8 characters
+```
+#Emoticons replacement
+strText <- mapUtf8Characters(strText, EMOTICONSMAP)
 
-1. 
+#Control characters replacement
+strText <- mapUtf8Characters(strText, CONTROLMAP)
 
+#Utf-8 characters replacement
+strText <- mapUtf8Characters(strText, UTF8MAP)
+```
+
+#### Text normalization
+Lowercasing, numbers removal,punctuation removal, white space normalization, offensive words removal
+```
+c <- VCorpus(VectorSource(strText))
+c <- tm_map(c, tolower)
+c <- tm_map(c, removeNumbers)
+c <- tm_map(c, removePunctuation)
+c <- tm_map(c, stripWhitespace)
+c <- tm_map(c, PlainTextDocument)
+c <- tm_map(c, removeWords, offensiveWords)
+```
 
 # Exploratory data analysis
+```{r, echo=F}
+CLEANDIR <- "../clean/en_US"
+sentences <- c()
+for (src in c("twitter","news","blogs")) {
+    fileName <- sprintf("%s.%s.txt", "en_US", src)
+    srcFile <- sprintf("%s/%s", CLEANDIR, fileName)
+    df <- tbl_df(read.table(srcFile,allowEscapes = T, stringsAsFactors = F)) %>% rename(text=V1)
+    sentences <- c(sentences, df$text)
+}
+```
+The exploratory data analysis will be performed on **`r format(length(sentences),big.mark="'")`** sentences.
+
 ### N gram frequencies
 http://edutechwiki.unige.ch/fr/Tutoriel_tm_text_mining_package
+
+#### Unigrams
+Here is a word cloud of words occurring more than 50 times.
+```{r, echo=F}
+c <- Corpus(VectorSource(paste(sentences,collapse=" ")))
+td <- DocumentTermMatrix(c)
+
+wordcloud(c,scale=c(7,1), rot.per=0.35, min.freq=50, use.r.layout=F,
+          colors= brewer.pal(8,"Spectral"), max.words = 100)
+```
+
+#### Bigrams - trigrams - 4-grams
+```{r, echo=F}
+unigramTokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 1, max = 1))
+bigramTokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 2, max = 2))
+
+unigramTokenizer <- unlist(lapply(sentences, bigramTokenizer))
+bigrams <- unlist(lapply(sentences, bigramTokenizer))
+length(bigrams)
+
+```
 
 ### Word selection
 
