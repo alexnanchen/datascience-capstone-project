@@ -17,7 +17,7 @@ source("code/constants.R")
 # return a data frame of sentences and words count
 #
 readSample <- function(fileName) {
-    cat("Reading ", fileName)
+    cat("Reading ", fileName,"\n")
     df <- tbl_df(read.table(fileName,allowEscapes = T)) %>%
              rename(text=V1, wordCount = V2)
     return(df)
@@ -32,6 +32,7 @@ readSample <- function(fileName) {
 readAllSamples <- function() {
     ret <- list()
     for (lang in LANGUAGES) {
+        dir.create(paste0(CLEANDIR,"/",lang), showWarnings = F)
         for (src in SOURCES) {
             #Input and output names
             fileName <- sprintf("%s.%s.txt", lang, src)
@@ -44,19 +45,6 @@ readAllSamples <- function() {
 }
 
 #---------------------------------------------------
-# Filter data
-#---------------------------------------------------
-# Filter the given data frame using the following
-# heuristic:
-#    - maximum number of digit groups
-# return a filtered data frame
-#
-filterSentences <- function(df) {
-    
-    
-}
-
-#---------------------------------------------------
 # Map some utf8 characters
 #---------------------------------------------------
 # param strText  : a character string
@@ -65,7 +53,7 @@ filterSentences <- function(df) {
 mapUtf8Characters <- function(strText, utf8List) {
     for (v in utf8List) {
         #print(sprintf("%s %s %s",v[1], v[2], v[3]))
-        strText <- gsub(v[1], v[2], strText, perl = T)
+        strText <- gsub(enc2utf8(v[1]), enc2utf8(v[2]), enc2utf8(strText), perl = T)
     }
     return(strText)
 }
@@ -81,28 +69,21 @@ mapUtf8Characters <- function(strText, utf8List) {
 #    - Punctuation removal
 # return a filtered data frame
 #
-cleanSentences <- function(df) {
+cleanSentences <- function(df, offensiveWords, destFile) {
     #Join text for faster processing
-    strText <- paste(df$text, collapse = " $$dot$$ ")
+    strText <- paste(df$text, collapse = " dotsep ")
     
     #Tab, carriage return and new lines replacements
-    strText <- gsub("\t|\r|\n", "$$dot$$", strText, perl = T)
-    
-    #-----------------------------
-    # Word based replacement
-    #
-    #http://www.webopedia.com/quick_ref/Twitter_Dictionary_Guide.as
-    #Twitter words replacement
-    
-    
-    #Offensive words replacement
+    strText <- gsub("\t|\r|\n", " dotsep ", strText, perl = T)
     
     #-----------------------------
     # Character based replacement
     #
     #Emoticons replacement
+    strText <- mapUtf8Characters(strText, EMOTICONSMAP)
     
     #Control characters replacement
+    strText <- mapUtf8Characters(strText, CONTROLMAP)
     
     #Utf-8 characters replacement
     strText <- mapUtf8Characters(strText, UTF8MAP)
@@ -113,26 +94,39 @@ cleanSentences <- function(df) {
     c <- VCorpus(VectorSource(strText))
     c <- tm_map(c, tolower)
     c <- tm_map(c, removeNumbers)
-    #c <- tm_map(c, removePunctuation)
-    #c <- tm_map(c, removeWords, stopwords("english"))
-    #c <- tm_map(c, stemDocument, "english")
+    c <- tm_map(c, removePunctuation)
     c <- tm_map(c, stripWhitespace)
     c <- tm_map(c, PlainTextDocument)
+    c <- tm_map(c, removeWords, offensiveWords)
+ 
+    #Resegment into sentences   
+    sentences <- strsplit(as.character(c[[1]]), " dotsep ")[[1]]
     
-    strText <- as.character(c[[1]])
-    
-    print(strText)
-    
-    #Segment text using dots
-    #Set new dataframe
+    #Write results
+    cat("Outputing to", destFile, "\n")
+    write.table(sentences, destFile, sep="\t", row.names = F, col.names = F, quote=T)
 }
-
-
 
 ###################
 # Main
 #
+# To test that characters are substitued:
+# mapUtf8Characters(as.character("\ab"),CONTROLMAP)
+#
+# Load data sample
 samples <- readAllSamples()
-#test <- as.character("\u03B1")
-#mapUtf8Characters(test,UTF8MAP)
-#cleanSentences(samples$en_US$twitter)
+offensiveWords <- read.csv("resources/offensive.csv",header=F,stringsAsFactors = F)
+
+# Main processing
+for (lang in LANGUAGES) {
+    for (src in SOURCES) {
+        #Output names
+        fileName <- sprintf("%s.%s.txt", lang, src)
+        destFile <- sprintf("%s/%s/%s", CLEANDIR, lang, fileName)
+        
+        #Data preparation
+        cleanSentences(samples$en_US[[src]], offensiveWords$V1, destFile)
+    }
+} 
+
+rm(fileName, destFile)

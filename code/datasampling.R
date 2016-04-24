@@ -62,7 +62,6 @@ sampleSentences <- function(df, sampleSize) {
 # Main
 #
 MAXSENTPERSRC = 1000
-dir.create(SAMPLEDIR, showWarnings = F)
 
 for (lang in LANGUAGES) {
     for (src in SOURCES) {

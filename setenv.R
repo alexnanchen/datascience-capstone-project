@@ -17,4 +17,4 @@ setwd(scriptDir)
 #Some configuration
 source("code/config.R")
 
-rm(scriptDir, codeDir)
+rm(codeDir)

@@ -9,6 +9,11 @@ if (grepl("setenv.R$",scriptDir))
 
 DATADIR    = normalizePath(sprintf("%s/%s", PROJECTDIR, "../data"))
 SAMPLEDIR  = normalizePath(sprintf("%s/%s", PROJECTDIR, "../sample"))
+CLEANDIR   = normalizePath(sprintf("%s/%s", PROJECTDIR, "../clean"))
+
+dir.create(DATADIR, showWarnings = F)
+dir.create(SAMPLEDIR, showWarnings = F)
+dir.create(CLEANDIR, showWarnings = F)
 
 ####################
 # General constants
