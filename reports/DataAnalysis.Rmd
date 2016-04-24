@@ -15,6 +15,7 @@ kfigr: prefix:True
     library(kfigr)
     require(dplyr)
     require(ggplot2)
+    require(gridExtra)
     require(graphics)
     require(tm)
     require(wordcloud)
@@ -113,34 +114,82 @@ for (src in c("twitter","news","blogs")) {
 The exploratory data analysis will be performed on **`r format(length(sentences),big.mark="'")`** sentences.
 
 ### N gram frequencies
-http://edutechwiki.unige.ch/fr/Tutoriel_tm_text_mining_package
-
 #### Unigrams
-Here is a word cloud of words occurring more than 50 times.
 ```{r, echo=F}
+unigramTokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 1, max = 1))
+unigrams <- unlist(lapply(sentences, unigramTokenizer))
+nbUnigrams <- length(table(unigrams))
+```
+In total, there are **`r format(nbUnigrams, big.mark="'")`** unique words.
+
+Here is a word cloud of words occurring more than 50 times.
+```{r, echo=F, fig.height=4}
 c <- Corpus(VectorSource(paste(sentences,collapse=" ")))
 td <- DocumentTermMatrix(c)
-
-wordcloud(c,scale=c(7,1), rot.per=0.35, min.freq=50, use.r.layout=F,
+wordcloud(c,scale=c(6,1), rot.per=0.35, min.freq=50, use.r.layout=F,
           colors= brewer.pal(8,"Spectral"), max.words = 100)
 ```
 
-#### Bigrams - trigrams - 4-grams
+#### Bigrams and trigrams
 ```{r, echo=F}
-unigramTokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 1, max = 1))
 bigramTokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 2, max = 2))
-
-unigramTokenizer <- unlist(lapply(sentences, bigramTokenizer))
 bigrams <- unlist(lapply(sentences, bigramTokenizer))
-length(bigrams)
-
+nbBigrams <- length(table(bigrams))
+trigramTokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 3, max = 3))
+trigrams <- unlist(lapply(sentences, trigramTokenizer))
+nbTrigrams <- length(table(trigrams))
 ```
+Here are some frequencies plot:
+```{r, echo=F, fig.height=3, fig.width=9}
+dfBigramFreq <- tbl_df(data.frame(table(bigrams))) %>% arrange(Freq) %>%
+                mutate(bigrams = factor(bigrams,levels=as.character(bigrams)))
+
+dfTrigramFreq <- tbl_df(data.frame(table(trigrams))) %>% arrange(Freq) %>%
+                 mutate(trigrams = factor(trigrams,levels = as.character(trigrams)))
+gbigram <- ggplot(tail(dfBigramFreq,10),aes(x=bigrams,y=Freq, fill=Freq)) + 
+           geom_bar(stat="identity") + coord_flip() + theme_bw() + ggtitle("Most common bigrams")
+gtrigram <- ggplot(tail(dfTrigramFreq,10),aes(x=trigrams,y=Freq, fill=Freq)) + 
+           geom_bar(stat="identity") + coord_flip() + theme_bw() + ggtitle("Most common trigrams")
+grid.arrange(gbigram,gtrigram,ncol=2)
+```
+
+### N-gram coverage
+It can be interesting to relate the increase of unique ngrams and their decrease of coverage.
+
+By coverage we mean the percentage of observed ngram versus all possible ngrams. For example
+if there are 5 unigrams, the maximum number of bigram is 25 and if we have observered 5 unique bigrams, the bigram coverage is 5 for 25 or 20%.
+
+```{r, echo=F, message=F, warning=F, fig.height=3, fig.width=9}
+df <- data.frame(gram=c(1,2,3), count=c(nbUnigrams,nbBigrams,nbTrigrams), 
+                 log10.coverage=c(as.integer(0), log10(nbBigrams/nbUnigrams^2), log10(nbTrigrams/nbUnigrams^3)))
+
+p1 <- ggplot(df, aes(gram,count, fill=count)) + geom_bar(stat = "identity") + 
+       theme_bw() + ggtitle("N-gram counts") + xlab("n-gram")
+p2 <- ggplot(df, aes(gram,log10.coverage, fill=log10.coverage)) + geom_bar(stat = "identity") + 
+           theme_bw() + ggtitle("N-gram coverage in log10") + xlab("n-gram")
+
+grid.arrange(p1,p2,ncol=2)
+```
+
+We can se that as the number of unique ngram increase in linear fashion, the coverage decrease in an exponential manner.
 
 ### Word selection
+We have seen that the number of unigram is very important when moving to higher orders like bigram and trigrams.
 
-### Foreign words
+Basically we would like to reduce the number of unigrams while keeping the maximum information.
+One way to check that is to order unigram by decreasing frequencies, find a cut-off point, take all unigram above that point, sum their total of occurence and compare that to the total word occurences.
 
-```{r, echo=F}
-
+```{r, echo=F, warning=F}
+dfFreq <- tbl_df(data.frame(table(unigrams))) %>% arrange(desc(Freq))
+dfFreq$coverage <- cumsum(dfFreq$Freq)/sum(dfFreq$Freq)
+ggplot(dfFreq, aes(Freq, coverage)) + geom_point() + theme_bw() + xlim(0,50) + ggtitle("Influence of a count class removal") + xlab("Count classes")
 ```
+
+On the plot we can see that the removal of words appearing only once will keep the words coverage around 90%.
+
+### Conclusion
+The first important conclusion is that bigram and trigram coverage are very low. It is indeed very difficult to observe all unigram combinations and we need a lot of text. So a strategy to combine multiple model of different orders need to be used. For exampling backing of to lower order models.
+
+The second observation is that we can eliminate some keywords appearing rarely while keeping a coverage around 90%. Reducing the number of keywords will help to have a model of resonable size with a good predictive quality.
+
 

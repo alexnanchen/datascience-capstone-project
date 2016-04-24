@@ -77,21 +77,41 @@ c <- tm_map(c, removeWords, offensiveWords)
 The exploratory data analysis will be performed on **2'928** sentences.
 
 ### N gram frequencies
-http://edutechwiki.unige.ch/fr/Tutoriel_tm_text_mining_package
-
 #### Unigrams
+
+In total, there are **11'124** unique words.
+
 Here is a word cloud of words occurring more than 50 times.
-![](DataAnalysis_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+![](DataAnalysis_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
-#### Bigrams - trigrams - 4-grams
+#### Bigrams and trigrams
 
-```
-## [1] 53313
-```
+Here are some frequencies plot:
+![](DataAnalysis_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
+### N-gram coverage
+It can be interesting to relate the increase of unique ngrams and their decrease of coverage.
+
+By coverage we mean the percentage of observed ngram versus all possible ngrams. For example
+if there are 5 unigrams, the maximum number of bigram is 25 and if we have observered 5 unique bigrams, the bigram coverage is 5 for 25 or 20%.
+
+![](DataAnalysis_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+
+We can se that as the number of unique ngram increase in linear fashion, the coverage decrease in an exponential manner.
 
 ### Word selection
+We have seen that the number of unigram is very important when moving to higher orders like bigram and trigrams.
 
-### Foreign words
+Basically we would like to reduce the number of unigrams while keeping the maximum information.
+One way to check that is to order unigram by decreasing frequencies, find a cut-off point, take all unigram above that point, sum their total of occurence and compare that to the total word occurences.
 
+![](DataAnalysis_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+
+On the plot we can see that the removal of words appearing only once will keep the words coverage around 90%.
+
+### Conclusion
+The first important conclusion is that bigram and trigram coverage are very low. It is indeed very difficult to observe all unigram combinations and we need a lot of text. So a strategy to combine multiple model of different orders need to be used. For exampling backing of to lower order models.
+
+The second observation is that we can eliminate some keywords appearing rarely while keeping a coverage around 90%. Reducing the number of keywords will help to have a model of resonable size with a good predictive quality.
 
 
