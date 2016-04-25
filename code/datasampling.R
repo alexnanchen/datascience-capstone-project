@@ -61,7 +61,7 @@ sampleSentences <- function(df, sampleSize) {
 ###################
 # Main
 #
-MAXSENTPERSRC = 1000
+MAXSENTPERSRC = 50000
 
 for (lang in LANGUAGES) {
     for (src in SOURCES) {
@@ -77,7 +77,7 @@ for (lang in LANGUAGES) {
         #Output selected sentences
         dir.create(sprintf("%s/%s",SAMPLEDIR,lang), showWarnings = F)
         cat("Outputing", destFile, "\n")
-        write.table(dfSelected, destFile, sep="\t", row.names = F, col.names = F, quote=T)
+        write.table(dfSelected, destFile, sep="|", row.names = F, col.names = F, quote=T, qmethod = "double")
     }
 } 
 

@@ -74,14 +74,20 @@ c <- tm_map(c, removeWords, offensiveWords)
 
 # Exploratory data analysis
 
-The exploratory data analysis will be performed on **2'928** sentences.
+The exploratory data analysis will be performed on **149'702** sentences.
 
 ### N gram frequencies
 #### Unigrams
 
-In total, there are **11'124** unique words.
+In total, there are **107'154** unique words.
 
 Here is a word cloud of words occurring more than 50 times.
+
+```
+## Warning in wordcloud(c, scale = c(6, 1), rot.per = 0.35, min.freq = 50, :
+## the could not be fit on page. It will not be plotted.
+```
+
 ![](DataAnalysis_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
 #### Bigrams and trigrams

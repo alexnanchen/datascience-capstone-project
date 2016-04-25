@@ -18,7 +18,7 @@ source("code/constants.R")
 #
 readSample <- function(fileName) {
     cat("Reading ", fileName,"\n")
-    df <- tbl_df(read.table(fileName,allowEscapes = T)) %>%
+    df <- tbl_df(read.table(fileName,allowEscapes = T, sep="|", stringsAsFactors = F)) %>%
              rename(text=V1, wordCount = V2)
     return(df)
 }
@@ -79,6 +79,7 @@ cleanSentences <- function(df, offensiveWords, destFile) {
     #-----------------------------
     # Character based replacement
     #
+    cat("  --> Character based replacement")
     #Emoticons replacement
     strText <- mapUtf8Characters(strText, EMOTICONSMAP)
     
@@ -91,6 +92,7 @@ cleanSentences <- function(df, offensiveWords, destFile) {
     #-----------------------------
     # Other replacement
     #
+    cat("  --> Other replacement")
     c <- VCorpus(VectorSource(strText))
     c <- tm_map(c, tolower)
     c <- tm_map(c, removeNumbers)
@@ -103,7 +105,7 @@ cleanSentences <- function(df, offensiveWords, destFile) {
     sentences <- strsplit(as.character(c[[1]]), " dotsep ")[[1]]
     
     #Write results
-    cat("Outputing to", destFile, "\n")
+    cat("  --> Outputing to", destFile, "\n")
     write.table(sentences, destFile, sep="\t", row.names = F, col.names = F, quote=T)
 }
 
@@ -125,6 +127,7 @@ for (lang in LANGUAGES) {
         destFile <- sprintf("%s/%s/%s", CLEANDIR, lang, fileName)
         
         #Data preparation
+        cat("Cleaning ", fileName)
         cleanSentences(samples$en_US[[src]], offensiveWords$V1, destFile)
     }
 } 
