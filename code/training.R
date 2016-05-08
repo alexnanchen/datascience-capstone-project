@@ -1,6 +1,7 @@
 library(dplyr)
 library(data.table)
-require(RWeka)
+library(RWeka)
+library(tidyr)
 
 ###################
 # Environment
@@ -37,27 +38,39 @@ text2ngram <- function(sentences, ngramOrders=c(1)) {
     ngramList <- list()
     for (order in ngramOrders) {
         ngramTokenizer <- function(x) NGramTokenizer(x, Weka_control(min = order, max = order))
-        ngrams <- as.data.frame(table(as.vector(unlist(lapply(sentences, ngramTokenizer)))))
+        #Build counts
+        ngrams <- as.data.frame(table(as.vector(unlist(lapply(sentences, ngramTokenizer)))),
+                                stringsAsFactors=F)
         names(ngrams)[1] <- "token"
-        ngramList[[sprintf("%d-gram",order)]] <- data.table(ngrams, key = "token")
+        #Check all same order
+        filteredIndices <- which(sapply(ngrams$token,function(s) {length(strsplit(s," ")[[1]])}!=order))
+        ngrams <- ngrams[-filteredIndices,]
+        #Add id column
+        ngrams$id <- seq(1,nrow(ngrams))
+        ngrams <- dplyr::select(ngrams, id, token, freq=Freq)
+        #Split token into words
+        colNames <- sapply(seq(1,order), function(s) paste0("word",s))
+        ngrams <- tidyr::separate(ngrams,"token",colNames," ")
+        #Add to list
+        ngramList[[sprintf("%d-gram",order)]] <- data.table(ngrams)
     }
     return(ngramList)
 }
 
 #---------------------------------------------------
-# Build a list of frequency of frequency tables
+# Get marginalized counts
 #---------------------------------------------------
-# param orderList: a list of n-gram frequency tables
-# return a list of data tables
+# param dt           : a data table with "word1", 
+#                      ... and "freq" columns
+#       fixedIndices : indices that are fixed
+# return a data table with the fixed columns and
+#        their marginalized counts
 #
-count2FreqCount <- function(orderList) {
-    frequencyList <- list()
-    for (n in names(orderList)) {
-         frequency <- as.data.frame(table(l[[n]]$Freq))
-         names(frequency) <- c("frequency","frequencyCount")
-         frequencyList[[n]] <- data.table(frequency, key = "frequency")
-    }
-    return(frequencyList)
+getMarginalizedCount <- function(dt, fixedIndices = c(1)) {
+    colNames <- sapply(fixedIndices, function(s) paste0("word",s))
+    index <- t[,lapply(.SD,sum), by=colNames,.SDcols="freq"]
+    setkeyv(index, colNames)
+    return(index)
 }
 
 ###################
@@ -67,7 +80,7 @@ count2FreqCount <- function(orderList) {
 sentences <- NULL
 for (src in SOURCES) {
     fileName <- sprintf("%s.%s.txt", "en_US", src)
-    srcFile <- sprintf("%s/%s/%s", CLEANDIR, lang, fileName)
+    srcFile <- sprintf("%s/%s/%s", CLEANDIR, "en_US", fileName)
     if (is.null(sentences))
         sentences <- readSample(srcFile)
     else
@@ -75,10 +88,8 @@ for (src in SOURCES) {
 }
 
 #Build ngram frequency table
-ngramCount <- text2ngram(sentences, ngramOrders = c(1,2,3))
+ngramList <- text2ngram(sentences, ngramOrders = c(1,2,3))
 
-#Build frequency of frequency table
-frequencyCount <- count2FreqCount(ngramCount)
-
+#i[list("<s>","what"),]
 
 rm(fileName, srcFile)
