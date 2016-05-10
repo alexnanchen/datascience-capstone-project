@@ -8,13 +8,14 @@ library(tidyr)
 #
 source("code/config.R")
 source("code/constants.R")
+source("code/mod.R")
 
 ###################
 # Implementation
 #
-#---------------------------------------------------
+#-----------------------------------------------------
 # Read sentences from a text file 
-#---------------------------------------------------
+#-----------------------------------------------------
 # param fileName  : the source text file
 # return a data frame of sentences and words count
 #
@@ -23,13 +24,13 @@ readSample <- function(fileName) {
     df <- tbl_df(read.table(fileName,allowEscapes = T, sep="|", stringsAsFactors = F)) %>%
         rename(text=V1)
     df$text <- sapply(df$text, function(s) sprintf("<s> %s </s>",s))
-    
+    Encoding(df$text) <- "UTF-8"
     return(df)
 }
 
-#---------------------------------------------------
+#-----------------------------------------------------
 # Build a list of n-gram frequency tables
-#---------------------------------------------------
+#-----------------------------------------------------
 # param sentences   : a character vector
 #       ngramOrders : a numeric vector
 # return a list of data tables
@@ -60,9 +61,9 @@ text2ngram <- function(sentences, ngramOrders=c(1)) {
     return(ngramList)
 }
 
-#---------------------------------------------------
+#-----------------------------------------------------
 # Get marginalized counts
-#---------------------------------------------------
+#-----------------------------------------------------
 # param dt           : a data table with "word1", 
 #                      ... and "freq" columns
 #       fixedIndices : indices that are fixed
@@ -75,59 +76,44 @@ getMarginalizedCount <- function(dt, fixedIndices = c(1)) {
     colNames <- names(dt)[fixedIndices]
     index <- dt[,lapply(.SD,sum), by=colNames,.SDcols="freq"]
     setkeyv(index, colNames)
-    return(index)
+    return (list(index=index, colNames=colNames))
 }
 
-#---------------------------------------------------
+#-----------------------------------------------------
 # Train probabilities for a n-gram order
-#---------------------------------------------------
+#-----------------------------------------------------
 # param dt       : a data table with "word1", ... 
 #                  and "freq" columns
 #       discount : a fixed discount
-# return a data table with a probability column
+# return a data table with a log10 probability column
 #
 trainProb <- function(dt, discount=0.75) {
     wIndices <- grep("word*",names(dt))
-    print(wIndices)
     order <- length(wIndices)
     fixedIndices = wIndices[-order]
-    print(fixedIndices)
-    marginalizedIndex <- getMarginalizedCount(dt, fixedIndices)
-    
-    count2prob <- function(row) {
-        #print(row["freq"])
-        
-        #Get count statistics
-        key <- as.list(row[fixedIndices])
-        marginalizedCount <- as.integer(marginalizedIndex[key,]$freq)
-        count <- as.integer(row["freq"])
-        #cat(count, count-discount, marginalizedCount, "\n")
-        
-        #Probability estimate
-        prob <- max(0, count-discount)/marginalizedCount
-        
-        print(log10(prob))
-    }
-    #print(wIndices)
-    apply(dt, 1, count2prob)
+    ret <- getMarginalizedCount(dt, fixedIndices)
+    setkeyv(dt, ret$colNames)
+    dt <- dt[ret$index]
+    dt$logprob <- log10((dt$freq-discount)/dt$i.freq)
+    return(dt)
 }
 
-#---------------------------------------------------
+#-----------------------------------------------------
 # Train continuation probabilities
-#---------------------------------------------------
+#-----------------------------------------------------
 # param dt       : a data table with "word1", ... 
 #                  and "freq" columns
 #       discount : a fixed discount
 # return a data table with a probability column
 #
-trainContinuationProb <- function(dt, discount) {
+trainContinuationProb <- function(dt, discount=0.75) {
     
     
 }
 
-#---------------------------------------------------
+#-----------------------------------------------------
 # Train backoff weights
-#---------------------------------------------------
+#-----------------------------------------------------
 # param dt       : a data table with "word1", ... 
 #                  and "freq" columns
 #       discount : a fixed discount
@@ -142,22 +128,27 @@ trainBackoffWeight <- function() {
 # Main
 #
 #Read cleaned files
-# sentences <- NULL
-# for (src in SOURCES) {
-#     fileName <- sprintf("%s.%s.txt", "en_US", src)
-#     srcFile <- sprintf("%s/%s/%s", CLEANDIR, "en_US", fileName)
-#     if (is.null(sentences)) {
-#         sentences <- readSample(srcFile)
-#     }
-#     else
-#         sentences <- bind_rows(sentences,readSample(srcFile))
-# }
+sentences <- NULL
+for (src in SOURCES) {
+    fileName <- sprintf("%s.%s.txt", "en_US", src)
+    srcFile <- sprintf("%s/%s/%s", CLEANDIR, "en_US", fileName)
+    if (is.null(sentences)) {
+        sentences <- readSample(srcFile)
+    }
+    else
+        sentences <- bind_rows(sentences,readSample(srcFile))
+}
 
 #Build ngram frequency table
-#ngramList <- text2ngram(sentences, ngramOrders = c(1,2,3))
+ngramList <- text2ngram(sentences, ngramOrders = c(1,2,3))
 
-trainProb(ngramList[[3]])
+#3-grams discounted probabilities
+gram3 <- ngramList[[3]]
+gram3 <- trainProb(gram3)
 
-#i[list("<s>","what"),]
+#2-grams discounted countinuation probabilities
+gram2 <- ngramList[[2]]
+trainContinuationProb(gram2)
 
-#rm(fileName, srcFile)
+rmobj(fileName)
+rmobj(srcFile)
