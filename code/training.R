@@ -72,16 +72,22 @@ text2ngram <- function(sentences, ngramOrders=c(1)) {
 getMarginalizedCount <- function(dt, fixedIndices = c(1), cCount = F) {
     cat("---- Marginalizing on indices", fixedIndices, "\n")
     print(head(dt, n=2))
-    colNames <- names(dt)[fixedIndices]
-    index <- NULL
     #We work on a copy of original table
     if (cCount) {
         cat("  ==> Marginalized counts\n")
         dt$freq <- as.integer(dt$freq>0)
     }
+    #Now compute count stat
+    index <- NULL; colNames <- NULL
+    if (length(fixedIndices) == 0)
+        index <- dt[,lapply(.SD,sum),.SDcols="freq"]
+    else {
+        colNames <- names(dt)[fixedIndices]
+        index <- dt[,lapply(.SD,sum), by=colNames,.SDcols="freq"]
+        #Index on fixed columns
+        setkeyv(index, colNames)
+    }
     cat("-----------------------------\n")
-    index <- dt[,lapply(.SD,sum), by=colNames,.SDcols="freq"]
-    setkeyv(index, colNames)
     return (list(index=index, colNames=colNames))
 }
 
@@ -134,6 +140,7 @@ trainContinuationProb <- function(dtLower, dtHigher, discount=0.75) {
     
     cat("  --> Merging lower order column '", names(dtLower)[wIndicesLower], "' with index column '", 
         ret$colNames, "'\nIndex: \n", sep=""); print(ret$index[1,])
+
     setkeyv(dtLower, names(dtLower)[wIndicesLower])
     dtLower <- suppressWarnings(merge(dtLower, ret$index, by.x=names(dtLower)[wIndicesLower],
                      by.y = ret$colNames, all.x=T))
@@ -156,12 +163,16 @@ trainContinuationProb <- function(dtLower, dtHigher, discount=0.75) {
     
     cat("  --> Merging lower order column '", names(dtLower)[1], "' with index column '", 
         ret$colNames, "'\nIndex: \n", sep="");  print(ret$index[1,])
-    dtLower <- suppressWarnings(merge(dtLower, ret$index, by.x=names(dtLower)[1],
-                     by.y = ret$colNames, all.x=T))
-    dtLower[which(is.na(dtLower$freq.y))]$freq.y <- 1
-    setnames(dtLower,"freq.x","freq")
-    setnames(dtLower,"freq.y","totalMarginalized")
-    
+    if (is.null(ret$colNames))
+        dtLower$totalMarginalized <- rep(ret$index$freq, nrow(dtLower))
+    else {
+        dtLower <- suppressWarnings(merge(dtLower, ret$index, by.x=names(dtLower)[1],
+                         by.y = ret$colNames, all.x=T))
+        dtLower[which(is.na(dtLower$freq.y))]$freq.y <- 1
+        setnames(dtLower,"freq.x","freq")
+        setnames(dtLower,"freq.y","totalMarginalized")
+    }
+
     #Probability computation
     dtLower$logprob <- log10(pmax(dtLower$contCount-discount,0)/dtLower$totalMarginalized)
     dtLower[which(is.infinite(dtLower$logprob))]$logprob <- (-100)
@@ -209,7 +220,7 @@ gram2 <- trainContinuationProb(gram2, gram3)
 
 #1-grams discounted countinuation probabilities
 gram1 <- ngramList[[1]]
-t <- trainContinuationProb(gram1, gram2)
+gram1 <- trainContinuationProb(gram1, gram2)
 
 rmobj(fileName)
 rmobj(srcFile)
