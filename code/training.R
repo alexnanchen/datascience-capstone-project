@@ -94,7 +94,7 @@ trainProb <- function(dt, discount=0.75) {
     ret <- getMarginalizedCount(dt, fixedIndices)
     setkeyv(dt, ret$colNames)
     dt <- dt[ret$index]
-    dt$logprob <- log10((dt$freq-discount)/dt$i.freq)
+    dt$logprob <- log10(max(dt$freq-discount,0)/dt$i.freq)
     return(dt)
 }
 
@@ -106,9 +106,41 @@ trainProb <- function(dt, discount=0.75) {
 #       discount : a fixed discount
 # return a data table with a probability column
 #
-trainContinuationProb <- function(dt, discount=0.75) {
+trainContinuationProb <- function(dtLower, dtHigher, discount=0.75) {
+    wIndicesLower <- grep("word*",names(dtLower))
+    orderLower <- length(wIndicesLower)
+    wIndicesHigher <- grep("word*",names(dtHigher))
+    orderHigher <- length(wIndicesHigher)
     
+    #Continuation count
+    fixedIndices = wIndicesHigher[-1]
+    ret <- getMarginalizedCount(dtHigher, fixedIndices)
     
+    cat("Merging lower order column '", names(dtLower)[wIndicesLower], "' with index column '", 
+        ret$colNames, "' Index: \n", sep=""); print(ret$index[1,])
+    
+    setkeyv(dtLower, names(dtLower)[wIndicesLower])
+    dtLower <- merge(dtLower, ret$index, by.x=names(dtLower)[wIndicesLower],
+                     by.y = ret$colNames, all.x=T)
+    dtLower[which(is.na(dtLower$freq.y))]$freq.y <- 0
+    setnames(dtLower,"freq.y","contCount")
+    
+    #Normalization count
+    fixedIndices = wIndicesHigher[-c(1, length(wIndicesHigher))]
+    ret <- getMarginalizedCount(dtHigher, fixedIndices)
+    
+    cat("Merging lower order column '", names(dtLower)[1], "' with index column '", 
+        ret$colNames, "' Index: \n", sep="");  print(ret$index[1,])
+    
+    dtLower <- merge(dtLower, ret$index, by.x=names(dtLower)[1],
+                     by.y = ret$colNames, all.x=T)
+    
+    dtLower[which(is.na(dtLower$freq))]$freq <- 1
+    setnames(dtLower,"freq","totalMarginalized")
+    
+    #Probability computation
+    dtLower$logprob <- log10(pmax(dtLower$contCount-discount,0)/dtLower$totalMarginalized)
+    return(dtLower)
 }
 
 #-----------------------------------------------------
@@ -148,7 +180,7 @@ gram3 <- trainProb(gram3)
 
 #2-grams discounted countinuation probabilities
 gram2 <- ngramList[[2]]
-trainContinuationProb(gram2)
+t <- trainContinuationProb(gram2, gram3)
 
 rmobj(fileName)
 rmobj(srcFile)
