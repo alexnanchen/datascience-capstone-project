@@ -99,7 +99,7 @@ getMarginalizedCount <- function(dt, fixedIndices = c(1), cCount = F) {
 #       discount : a fixed discount
 # return a data table with a log10 probability column
 #
-trainProb <- function(dt, discount=0.75) {
+trainProb <- function(dt, discount) {
     wIndices <- grep("word*",names(dt))
     order <- length(wIndices)
     cat("###### Normal counts, order", order, "\n")
@@ -124,7 +124,7 @@ trainProb <- function(dt, discount=0.75) {
 #       discount : a fixed discount
 # return a data table with a probability column
 #
-trainContinuationProb <- function(dtLower, dtHigher, discount=0.75) {
+trainContinuationProb <- function(dtLower, dtHigher, discount) {
     wIndicesLower <- grep("word*",names(dtLower))
     wIndicesHigher <- grep("word*",names(dtHigher))
     ######################
@@ -177,7 +177,7 @@ trainContinuationProb <- function(dtLower, dtHigher, discount=0.75) {
 
     #Probability computation
     dtLower$logprob <- log10(pmax(dtLower$contCount-discount,0)/dtLower$totalMarginalized)
-    dtLower[which(is.infinite(dtLower$logprob))]$logprob <- (-100)
+    dtLower[which(is.infinite(dtLower$logprob))]$logprob <- (-99)
     return(dtLower)
 }
 
@@ -191,7 +191,7 @@ trainContinuationProb <- function(dtLower, dtHigher, discount=0.75) {
 #       discount : a fixed discount
 # return a data table with a probability column
 #
-trainBackoffWeight <- function(dtLower, dtHigher, discount=0.75) {
+trainBackoffWeight <- function(dtLower, dtHigher, discount) {
     wIndicesLower <- grep("word*",names(dtLower))
     wIndicesHigher <- grep("word*",names(dtHigher))
     
@@ -210,7 +210,7 @@ trainBackoffWeight <- function(dtLower, dtHigher, discount=0.75) {
     setnames(dtLower, "freq.y", "budgetContributors")
     
     dtLower$backoffWeight <- log10(discount/dtLower$totalMarginalized*dtLower$budgetContributors)
-    dtLower[which(is.infinite(dtLower$backoffWeight))]$backoffWeight <- (-100)
+    dtLower[which(is.infinite(dtLower$backoffWeight))]$backoffWeight <- (-99)
     return(dtLower)
 }
 
@@ -236,23 +236,32 @@ write.table(sentences, "training.txt", quote=F, sep="\t", row.names=F,
 #Build ngram frequency table
 ngramList <- text2ngram(sentences, ngramOrders = c(1,2,3))
 
-#3-grams discounted probabilities
+#Discounted value
 gram3 <- ngramList[[3]]
-gram3 <- trainProb(gram3)
+gram2 <- ngramList[[2]]
+gram1 <- ngramList[[1]]
+
+# n1/(n1+2*n2)
+D <- nrow(gram1)/(nrow(gram1)+2*nrow(gram2))
+#D = 0.75
+cat("Discount of ", D, "\n")
+
+#3-grams discounted probabilities
+gram3 <- trainProb(gram3, D)
 
 #2-grams discounted countinuation probabilities
-gram2 <- ngramList[[2]]
-gram2 <- trainContinuationProb(gram2, gram3)
+
+gram2 <- trainContinuationProb(gram2, gram3, D)
 
 #1-grams discounted countinuation probabilities
-gram1 <- ngramList[[1]]
-gram1 <- trainContinuationProb(gram1, gram2)
+
+gram1 <- trainContinuationProb(gram1, gram2, D)
 
 #2-grams backoff weights
-gram2 <- trainBackoffWeight(gram2, gram3)
+gram2 <- trainBackoffWeight(gram2, gram3, D)
 
 #1-grams backoff weights
-gram1 <- trainBackoffWeight(gram1, gram2)
+gram1 <- trainBackoffWeight(gram1, gram2, D)
 
 rmobj(fileName)
 rmobj(srcFile)
