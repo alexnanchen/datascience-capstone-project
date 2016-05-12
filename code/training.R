@@ -117,7 +117,9 @@ trainProb <- function(dt, discount=0.75) {
 #-----------------------------------------------------
 # Train continuation probabilities
 #-----------------------------------------------------
-# param dt       : a data table with "word1", ... 
+# param dtLower  : a data table with "word1", ... 
+#                  and "freq" columns
+# param dtHigher : a data table with "word1", ... 
 #                  and "freq" columns
 #       discount : a fixed discount
 # return a data table with a probability column
@@ -182,14 +184,34 @@ trainContinuationProb <- function(dtLower, dtHigher, discount=0.75) {
 #-----------------------------------------------------
 # Train backoff weights
 #-----------------------------------------------------
-# param dt       : a data table with "word1", ... 
+# param dtLower  : a data table with "word1", ... 
+#                  and "freq" columns
+# param dtHigher : a data table with "word1", ... 
 #                  and "freq" columns
 #       discount : a fixed discount
 # return a data table with a probability column
 #
-trainBackoffWeight <- function() {
+trainBackoffWeight <- function(dtLower, dtHigher, discount=0.75) {
+    wIndicesLower <- grep("word*",names(dtLower))
+    wIndicesHigher <- grep("word*",names(dtHigher))
     
+    cat("###### Budget contributors:\n")
+    fixedIndices = wIndicesHigher[-length(wIndicesHigher)]
+    ret <- getMarginalizedCount(dtHigher, fixedIndices, T)
     
+    cat("  --> Merging lower order column '", names(dtLower)[wIndicesLower], "' with index column '", 
+        ret$colNames, "'\nIndex: \n", sep=""); print(ret$index[1,])
+    
+    setkeyv(dtLower, names(dtLower)[wIndicesLower])
+    dtLower <- suppressWarnings(merge(dtLower, ret$index, by.x=names(dtLower)[wIndicesLower],
+                                      by.y = ret$colNames, all.x=T))
+    dtLower[which(is.na(dtLower$freq.y))]$freq.y <- 0
+    setnames(dtLower, "freq.x", "freq")
+    setnames(dtLower, "freq.y", "budgetContributors")
+    
+    dtLower$backoffWeight <- log10(discount/dtLower$totalMarginalized*dtLower$budgetContributors)
+    dtLower[which(is.infinite(dtLower$backoffWeight))]$backoffWeight <- (-100)
+    return(dtLower)
 }
 
 ###################
@@ -207,6 +229,10 @@ for (src in SOURCES) {
         sentences <- bind_rows(sentences,readSample(srcFile))
 }
 
+#Save sentences
+write.table(sentences, "training.txt", quote=F, sep="\t", row.names=F,
+            col.names=F, fileEncoding = "UTF-8")
+
 #Build ngram frequency table
 ngramList <- text2ngram(sentences, ngramOrders = c(1,2,3))
 
@@ -221,6 +247,12 @@ gram2 <- trainContinuationProb(gram2, gram3)
 #1-grams discounted countinuation probabilities
 gram1 <- ngramList[[1]]
 gram1 <- trainContinuationProb(gram1, gram2)
+
+#2-grams backoff weights
+gram2 <- trainBackoffWeight(gram2, gram3)
+
+#1-grams backoff weights
+gram1 <- trainBackoffWeight(gram1, gram2)
 
 rmobj(fileName)
 rmobj(srcFile)
