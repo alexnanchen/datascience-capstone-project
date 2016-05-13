@@ -109,8 +109,8 @@ trainProb <- function(dt, discount) {
     dt <-  suppressWarnings(merge(dt, ret$index, all.x=T))
     print(head(dt))
     setnames(dt, "freq.x", "freq")
-    setnames(dt, "freq.y", "marginalizedCount")
-    dt$logprob <- log10(pmax(dt$freq-discount,0)/dt$marginalizedCount)
+    setnames(dt, "freq.y", "totalMarginalized")
+    dt$logprob <- log10(pmax(dt$freq-discount,0)/dt$totalMarginalized)
     return(dt)
 }
 
@@ -195,6 +195,8 @@ trainBackoffWeight <- function(dtLower, dtHigher, discount) {
     wIndicesLower <- grep("word*",names(dtLower))
     wIndicesHigher <- grep("word*",names(dtHigher))
     
+    n1 <- 
+    
     cat("###### Budget contributors:\n")
     fixedIndices = wIndicesHigher[-length(wIndicesHigher)]
     ret <- getMarginalizedCount(dtHigher, fixedIndices, T)
@@ -209,9 +211,30 @@ trainBackoffWeight <- function(dtLower, dtHigher, discount) {
     setnames(dtLower, "freq.x", "freq")
     setnames(dtLower, "freq.y", "budgetContributors")
     
-    dtLower$backoffWeight <- log10(discount/dtLower$totalMarginalized*dtLower$budgetContributors)
-    dtLower[which(is.infinite(dtLower$backoffWeight))]$backoffWeight <- (-99)
+    cat("###### Discount probabilities:\n")
+    cat("  --> Merging lower order column '", names(dtLower)[wIndicesLower], "' with higher order column '", 
+        names(dtHigher)[fixedIndices], "'\n", sep="");
+    
+    #All values are the same, use max function
+    colNames <- names(dtHigher)[fixedIndices]
+    dtTmp <- dtHigher[,lapply(.SD,max), by=colNames,.SDcols="totalMarginalized"]
+    
+    dtLower <- suppressWarnings(merge(dtLower, dtTmp, by.x=names(dtLower)[wIndicesLower],
+                                      by.y = colNames , all.x=T))
+    
+    setnames(dtLower, "totalMarginalized.x", "totalMarginalized")
+    setnames(dtLower, "totalMarginalized.y", "discountNorm")
+    dtLower[which(is.na(dtLower$discountNorm))]$discountNorm <- 1
+    
+    dtLower$backoffWeight <- log10(discount/dtLower$discountNorm*dtLower$budgetContributors)
+    
     return(dtLower)
+}
+
+getDiscount <- function(dtHigher) {
+    n1 <- length(which(dtHigher[,freq==1]))
+    n2 <- length(which(dtHigher[,freq==2]))
+    return(n1/(n1+2*n2))
 }
 
 ###################
@@ -241,27 +264,29 @@ gram3 <- ngramList[[3]]
 gram2 <- ngramList[[2]]
 gram1 <- ngramList[[1]]
 
-# n1/(n1+2*n2)
-D <- nrow(gram1)/(nrow(gram1)+2*nrow(gram2))
-#D = 0.75
-cat("Discount of ", D, "\n")
+#Discounts
+D3 = getDiscount(gram3)
+D2 = getDiscount(gram2)
+D1 = getDiscount(gram1)
 
 #3-grams discounted probabilities
-gram3 <- trainProb(gram3, D)
+gram3 <- trainProb(gram3, D3)
 
 #2-grams discounted countinuation probabilities
-
-gram2 <- trainContinuationProb(gram2, gram3, D)
+gram2 <- trainContinuationProb(gram2, gram3, D2)
 
 #1-grams discounted countinuation probabilities
-
-gram1 <- trainContinuationProb(gram1, gram2, D)
+gram1 <- trainContinuationProb(gram1, gram2, D1)
 
 #2-grams backoff weights
-gram2 <- trainBackoffWeight(gram2, gram3, D)
+gram2 <- trainBackoffWeight(gram2, gram3, D3)
 
 #1-grams backoff weights
-gram1 <- trainBackoffWeight(gram1, gram2, D)
+gram1 <- trainBackoffWeight(gram1, gram2, D2)
+
+cat("1-grams", nrow(gram1), "\n2-grams", nrow(gram2), "\n3-grams", nrow(gram3),"\n")
+
+cat("Discount of ", D3, D2, D1, "\n")
 
 rmobj(fileName)
 rmobj(srcFile)
