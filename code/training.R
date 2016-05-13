@@ -69,7 +69,7 @@ text2ngram <- function(sentences, ngramOrders=c(1)) {
 # return a data table with the fixed columns and
 #        their marginalized counts
 #
-getMarginalizedCount <- function(dt, fixedIndices = c(1), cCount = F) {
+getMarginalizedCount <- function(dt, fixedIndices = c(1), cCount = F, col="freq") {
     cat("---- Marginalizing on indices", fixedIndices, "\n")
     print(head(dt, n=2))
     #We work on a copy of original table
@@ -80,10 +80,10 @@ getMarginalizedCount <- function(dt, fixedIndices = c(1), cCount = F) {
     #Now compute count stat
     index <- NULL; colNames <- NULL
     if (length(fixedIndices) == 0)
-        index <- dt[,lapply(.SD,sum),.SDcols="freq"]
+        index <- dt[,lapply(.SD,sum),.SDcols=col]
     else {
         colNames <- names(dt)[fixedIndices]
-        index <- dt[,lapply(.SD,sum), by=colNames,.SDcols="freq"]
+        index <- dt[,lapply(.SD,sum), by=colNames,.SDcols=col]
         #Index on fixed columns
         setkeyv(index, colNames)
     }
@@ -146,7 +146,7 @@ trainContinuationProb <- function(dtLower, dtHigher, discount) {
     setkeyv(dtLower, names(dtLower)[wIndicesLower])
     dtLower <- suppressWarnings(merge(dtLower, ret$index, by.x=names(dtLower)[wIndicesLower],
                      by.y = ret$colNames, all.x=T))
-    dtLower[which(is.na(dtLower$freq.y))]$freq.y <- 0
+    dtLower[which(is.na(dtLower$freq.y))]$freq.y <- 1
     setnames(dtLower, "freq.x", "freq")
     setnames(dtLower, "freq.y", "contCount")
     
@@ -159,25 +159,29 @@ trainContinuationProb <- function(dtLower, dtHigher, discount) {
     #          ---------
     #           *   b  *
     #
+    # index <- gram2[,lapply(.SD,sum), by=c("word1"),.SDcols="contCount"]
+    #
     cat("###### Normalization count:\n")
-    fixedIndices = wIndicesHigher[-c(1, length(wIndicesHigher))]
-    ret <- getMarginalizedCount(dtHigher, fixedIndices, T)
+    #Remove one to adapt to lower gram. Empty vector-1 = empty vector
+    fixedIndices = wIndicesHigher[-c(1, length(wIndicesHigher))] - 1
+
+    ret <- getMarginalizedCount(dtLower, fixedIndices, F, "contCount")
     
     cat("  --> Merging lower order column '", names(dtLower)[1], "' with index column '", 
         ret$colNames, "'\nIndex: \n", sep="");  print(ret$index[1,])
+    
+    #Unigram case
     if (is.null(ret$colNames))
-        dtLower$totalMarginalized <- rep(ret$index$freq, nrow(dtLower))
+        dtLower$totalMarginalized <- rep(ret$index$contCount, nrow(dtLower))
     else {
         dtLower <- suppressWarnings(merge(dtLower, ret$index, by.x=names(dtLower)[1],
                          by.y = ret$colNames, all.x=T))
-        dtLower[which(is.na(dtLower$freq.y))]$freq.y <- 1
-        setnames(dtLower,"freq.x","freq")
-        setnames(dtLower,"freq.y","totalMarginalized")
+        setnames(dtLower,"contCount.x","contCount")
+        setnames(dtLower,"contCount.y","totalMarginalized")
     }
 
     #Probability computation
     dtLower$logprob <- log10(pmax(dtLower$contCount-discount,0)/dtLower$totalMarginalized)
-    dtLower[which(is.infinite(dtLower$logprob))]$logprob <- (-99)
     return(dtLower)
 }
 
@@ -194,8 +198,6 @@ trainContinuationProb <- function(dtLower, dtHigher, discount) {
 trainBackoffWeight <- function(dtLower, dtHigher, discount) {
     wIndicesLower <- grep("word*",names(dtLower))
     wIndicesHigher <- grep("word*",names(dtHigher))
-    
-    n1 <- 
     
     cat("###### Budget contributors:\n")
     fixedIndices = wIndicesHigher[-length(wIndicesHigher)]
@@ -227,6 +229,7 @@ trainBackoffWeight <- function(dtLower, dtHigher, discount) {
     dtLower[which(is.na(dtLower$discountNorm))]$discountNorm <- 1
     
     dtLower$backoffWeight <- log10(discount/dtLower$discountNorm*dtLower$budgetContributors)
+    dtLower[which(is.infinite(dtLower$backoffWeight))]$backoffWeight <- 0
     
     return(dtLower)
 }
