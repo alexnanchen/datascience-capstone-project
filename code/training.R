@@ -107,7 +107,7 @@ trainProb <- function(dt, discount) {
     ret <- getMarginalizedCount(dt, fixedIndices, F)
     setkeyv(dt, ret$colNames)
     dt <-  suppressWarnings(merge(dt, ret$index, all.x=T))
-    print(head(dt))
+    #print(head(dt))
     setnames(dt, "freq.x", "freq")
     setnames(dt, "freq.y", "totalMarginalized")
     dt$logprob <- log10(pmax(dt$freq-discount,0)/dt$totalMarginalized)
@@ -146,9 +146,13 @@ trainContinuationProb <- function(dtLower, dtHigher, discount) {
     setkeyv(dtLower, names(dtLower)[wIndicesLower])
     dtLower <- suppressWarnings(merge(dtLower, ret$index, by.x=names(dtLower)[wIndicesLower],
                      by.y = ret$colNames, all.x=T))
-    dtLower[which(is.na(dtLower$freq.y))]$freq.y <- 1
     setnames(dtLower, "freq.x", "freq")
     setnames(dtLower, "freq.y", "contCount")
+    
+    #Updade missing value with normal counts
+    #No missing value should be left, otherwise NA + integer = NA
+    nasIndices <- which(is.na(dtLower$contCount))
+    dtLower[nasIndices]$contCount <- dtLower[nasIndices]$freq
     
     ######################
     # Normalization count:
@@ -158,23 +162,27 @@ trainContinuationProb <- function(dtLower, dtHigher, discount) {
     #       --> d   b  c
     #          ---------
     #           *   b  *
-    #
-    # index <- gram2[,lapply(.SD,sum), by=c("word1"),.SDcols="contCount"]
+    # Instead of marginalizing on higher order n-gram, we can 
+    # marginalize on lower order because w1 has already been 
+    # marginalized. That way the conditional probability will
+    # sum to one.
+    # 
+    # w1 w2
+    # b  c   --> b *  (marginalization of last word)
     #
     cat("###### Normalization count:\n")
     #Remove one to adapt to lower gram. Empty vector-1 = empty vector
-    fixedIndices = wIndicesHigher[-c(1, length(wIndicesHigher))] - 1
-
+    fixedIndices = wIndicesLower[-length(wIndicesLower)]
     ret <- getMarginalizedCount(dtLower, fixedIndices, F, "contCount")
     
-    cat("  --> Merging lower order column '", names(dtLower)[1], "' with index column '", 
+    cat("  --> Merging lower order column '", names(dtLower)[fixedIndices], "' with index column '", 
         ret$colNames, "'\nIndex: \n", sep="");  print(ret$index[1,])
     
     #Unigram case
     if (is.null(ret$colNames))
         dtLower$totalMarginalized <- rep(ret$index$contCount, nrow(dtLower))
     else {
-        dtLower <- suppressWarnings(merge(dtLower, ret$index, by.x=names(dtLower)[1],
+        dtLower <- suppressWarnings(merge(dtLower, ret$index, by.x=names(dtLower)[fixedIndices],
                          by.y = ret$colNames, all.x=T))
         setnames(dtLower,"contCount.x","contCount")
         setnames(dtLower,"contCount.y","totalMarginalized")
@@ -259,10 +267,15 @@ for (src in SOURCES) {
 write.table(sentences, "training.txt", quote=F, sep="\t", row.names=F,
             col.names=F, fileEncoding = "UTF-8")
 
+#One chunk of text
+#sentences <- paste(sentences$text, collapse=" ")
+
 #Build ngram frequency table
-ngramList <- text2ngram(sentences, ngramOrders = c(1,2,3))
+cat("N-gram extraction\n")
+ngramList <- text2ngram(sentences, ngramOrders = c(1,2,3,4))
 
 #Discounted value
+gram4 <- ngramList[[4]]
 gram3 <- ngramList[[3]]
 gram2 <- ngramList[[2]]
 gram1 <- ngramList[[1]]
@@ -272,8 +285,13 @@ D3 = getDiscount(gram3)
 D2 = getDiscount(gram2)
 D1 = getDiscount(gram1)
 
+cat("Start training\n")
+#4-grams discounted probabilities, discout is D3
+#gram4 <- trainProb(gram4, D3)
+
 #3-grams discounted probabilities
 gram3 <- trainProb(gram3, D3)
+#gram3 <- trainContinuationProb(gram3, gram4, D3)
 
 #2-grams discounted countinuation probabilities
 gram2 <- trainContinuationProb(gram2, gram3, D2)
@@ -281,13 +299,17 @@ gram2 <- trainContinuationProb(gram2, gram3, D2)
 #1-grams discounted countinuation probabilities
 gram1 <- trainContinuationProb(gram1, gram2, D1)
 
+#3-grams backoff weights, discount is D3
+#gram3 <- trainBackoffWeight(gram3, gram4, D3)
+
 #2-grams backoff weights
 gram2 <- trainBackoffWeight(gram2, gram3, D3)
 
 #1-grams backoff weights
 gram1 <- trainBackoffWeight(gram1, gram2, D2)
 
-cat("1-grams", nrow(gram1), "\n2-grams", nrow(gram2), "\n3-grams", nrow(gram3),"\n")
+cat("1-grams", nrow(gram1), "\n2-grams", nrow(gram2), "\n3-grams", nrow(gram3),
+    "\n4-grams", nrow(gram4), "\n")
 
 cat("Discount of ", D3, D2, D1, "\n")
 
