@@ -139,7 +139,6 @@ trainContinuationProb <- function(dtLower, dtHigher, discount) {
     cat("###### Continuation count:\n")
     fixedIndices = wIndicesHigher[-1]
     ret <- getMarginalizedCount(dtHigher, fixedIndices, T)
-    
     cat("  --> Merging lower order column '", names(dtLower)[wIndicesLower], "' with index column '", 
         ret$colNames, "'\nIndex: \n", sep=""); print(ret$index[1,])
 
@@ -152,7 +151,13 @@ trainContinuationProb <- function(dtLower, dtHigher, discount) {
     #Updade missing value with normal counts
     #No missing value should be left, otherwise NA + integer = NA
     nasIndices <- which(is.na(dtLower$contCount))
+    #See mitlm https://github.com/mitlm/mitlm/blob/master/src/KneserNeySmoothing.cpp
+    #Initialize()
     dtLower[nasIndices]$contCount <- dtLower[nasIndices]$freq
+   
+    #Unigram, set "<s>" contCount to 0 before normalization count
+    if (length(wIndicesLower) == 1)
+        dtLower["<s>"]$contCount <- 0
     
     ######################
     # Normalization count:
@@ -174,7 +179,6 @@ trainContinuationProb <- function(dtLower, dtHigher, discount) {
     #Remove one to adapt to lower gram. Empty vector-1 = empty vector
     fixedIndices = wIndicesLower[-length(wIndicesLower)]
     ret <- getMarginalizedCount(dtLower, fixedIndices, F, "contCount")
-    
     cat("  --> Merging lower order column '", names(dtLower)[fixedIndices], "' with index column '", 
         ret$colNames, "'\nIndex: \n", sep="");  print(ret$index[1,])
     
@@ -190,6 +194,11 @@ trainContinuationProb <- function(dtLower, dtHigher, discount) {
     
     #Probability computation
     dtLower$logprob <- log10(pmax(dtLower$contCount-discount,0)/dtLower$totalMarginalized)
+    
+    #Start symbol cannot have a probability
+    if (is.null(ret$colNames))
+        dtLower["<s>"]$logprob <- -99
+    
     return(dtLower)
 }
 
@@ -242,9 +251,17 @@ trainBackoffWeight <- function(dtLower, dtHigher, discount) {
     return(dtLower)
 }
 
-getDiscount <- function(dtHigher) {
-    n1 <- length(which(dtHigher[,freq==1]))
-    n2 <- length(which(dtHigher[,freq==2]))
+#-----------------------------------------------------
+# Get fixed discount
+#-----------------------------------------------------
+# Formula: n1/(n1+2*n2)
+# param dtHigher : the table counts to be discounted
+# return the discount estimate
+getDiscount <- function(dtHigher, col="freq") {
+    n1 <- length(which(dtHigher[,col, with=F] == 1))
+    n2 <- length(which(dtHigher[,col, with=F] == 2))
+    if (n1 == 0 && n2 == 0)
+        return(1.0)
     return(n1/(n1+2*n2))
 }
 
@@ -281,13 +298,13 @@ gram2 <- ngramList[[2]]
 gram1 <- ngramList[[1]]
 
 #Discounts
+D4 = getDiscount(gram4)
 D3 = getDiscount(gram3)
 D2 = getDiscount(gram2)
-D1 = getDiscount(gram1)
 
 cat("Start training\n")
 #4-grams discounted probabilities, discout is D3
-#gram4 <- trainProb(gram4, D3)
+#gram4 <- trainProb(gram4, D4)
 
 #3-grams discounted probabilities
 gram3 <- trainProb(gram3, D3)
@@ -297,10 +314,11 @@ gram3 <- trainProb(gram3, D3)
 gram2 <- trainContinuationProb(gram2, gram3, D2)
 
 #1-grams discounted countinuation probabilities
-gram1 <- trainContinuationProb(gram1, gram2, D1)
+#Fixed vocabulary, no discount (see log10(1/42570))
+gram1 <- trainContinuationProb(gram1, gram2, 0)
 
-#3-grams backoff weights, discount is D3
-#gram3 <- trainBackoffWeight(gram3, gram4, D3)
+#3-grams backoff weights, discount is D4
+#gram3 <- trainBackoffWeight(gram3, gram4, D4)
 
 #2-grams backoff weights
 gram2 <- trainBackoffWeight(gram2, gram3, D3)
@@ -311,7 +329,7 @@ gram1 <- trainBackoffWeight(gram1, gram2, D2)
 cat("1-grams", nrow(gram1), "\n2-grams", nrow(gram2), "\n3-grams", nrow(gram3),
     "\n4-grams", nrow(gram4), "\n")
 
-cat("Discount of ", D3, D2, D1, "\n")
+cat("Discount of ", D3, D2, "\n")
 
 rmobj(fileName)
 rmobj(srcFile)
