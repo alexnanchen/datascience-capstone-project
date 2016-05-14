@@ -23,7 +23,7 @@ readSample <- function(fileName) {
     cat("Reading ", fileName,"\n")
     df <- tbl_df(read.table(fileName,allowEscapes = T, sep="|", stringsAsFactors = F)) %>%
         rename(text=V1)
-    df$text <- sapply(df$text, function(s) sprintf("%s",s))
+    df$text <- sapply(df$text, function(s) sprintf("<s> %s </s>",s))
     Encoding(df$text) <- "UTF-8"
     return(df)
 }
@@ -187,7 +187,7 @@ trainContinuationProb <- function(dtLower, dtHigher, discount) {
         setnames(dtLower,"contCount.x","contCount")
         setnames(dtLower,"contCount.y","totalMarginalized")
     }
-
+    
     #Probability computation
     dtLower$logprob <- log10(pmax(dtLower$contCount-discount,0)/dtLower$totalMarginalized)
     return(dtLower)
