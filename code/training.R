@@ -6,9 +6,8 @@ library(tidyr)
 ###################
 # Environment
 #
-source("code/config.R")
-source("code/constants.R")
 source("code/mod.R")
+source("code/constants.R")
 
 ###################
 # Implementation
@@ -281,11 +280,11 @@ writeModel <- function(dt) {
         tblDf <- select(tbl_df(dt), ngram, logprob)
     else {
         tblDf <- select(tbl_df(dt), ngram, logprob, backoffWeight)
-        tblDf$backoffWeight  <- round(tblDf$backoffWeight,4)
+        tblDf$backoffWeight  <- round(tblDf$backoffWeight,MODELPRECISION)
     }
     
     #4-decimal places rounding
-    tblDf$logprob  <- round(tblDf$logprob,4)
+    tblDf$logprob  <- round(tblDf$logprob,MODELPRECISION)
     
     #Data serialization
     strName <- sprintf("gram%d.txt", length(wIndices))

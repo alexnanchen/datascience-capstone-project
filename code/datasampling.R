@@ -61,7 +61,7 @@ sampleSentences <- function(df, sampleSize) {
 ###################
 # Main
 #
-MAXSENTPERSRC = 50000
+MAXSENTPERSRC = 1000
 
 for (lang in LANGUAGES) {
     for (src in SOURCES) {
