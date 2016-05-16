@@ -265,6 +265,34 @@ getDiscount <- function(dtHigher, col="freq") {
     return(n1/(n1+2*n2))
 }
 
+#-----------------------------------------------------
+# Write a n-gram model to disk
+#-----------------------------------------------------
+# param dt           : a data table
+#       highestOrder : is it the top level model
+writeModel <- function(dt) {
+    #Word merge
+    wIndices <- grep("word*",names(dt))
+    dt <- unite_(dt,"ngram", names(dt)[wIndices], sep=" ")
+    
+    #Columns selection
+    tblDf <- NULL
+    if (!"backoffWeight" %in% names(dt))
+        tblDf <- select(tbl_df(dt), ngram, logprob)
+    else {
+        tblDf <- select(tbl_df(dt), ngram, logprob, backoffWeight)
+        tblDf$backoffWeight  <- round(tblDf$backoffWeight,4)
+    }
+    
+    #4-decimal places rounding
+    tblDf$logprob  <- round(tblDf$logprob,4)
+    
+    #Data serialization
+    strName <- sprintf("gram%d.txt", length(wIndices))
+    write.table(tblDf, strName, col.names = F, row.names = F, sep="|", quote=T,
+                qmethod="double", fileEncoding = 'utf-8')
+}
+
 ###################
 # Main
 #
@@ -330,6 +358,12 @@ cat("1-grams", nrow(gram1), "\n2-grams", nrow(gram2), "\n3-grams", nrow(gram3),
     "\n4-grams", nrow(gram4), "\n")
 
 cat("Discount of ", D3, D2, "\n")
+
+#Models serialization
+cat("Writing models to disk\n")
+writeModel(gram1)
+writeModel(gram2)
+writeModel(gram3)
 
 rmobj(fileName)
 rmobj(srcFile)
