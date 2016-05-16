@@ -69,6 +69,54 @@ readBuffer <- function(fileName, skip, df) {
     return(df)
 }
 
+#-----------------------------------------------------
+# Compress data a frame
+#-----------------------------------------------------
+# param df  : a data frame
+# return a compressed data frame
+#
+compressBuffer <- function(df) {
+    
+}
+
+#-----------------------------------------------------
+# Hash a n-gram string
+#-----------------------------------------------------
+# param df  : a data frame
+# return a hash string
+#
+ngram2hash <- function(ngram) {
+    
+    
+}
+
+#-----------------------------------------------------
+# Pack two doubles into one integer
+#-----------------------------------------------------
+# param logprob       : a negative double
+#       backoffWeight : a negative double
+# return an integer
+#
+stats2integer <- function(logprob, backoffWeight) {
+    
+    
+}
+
+#-----------------------------------------------------
+# Unpack one integer into two doubles
+#-----------------------------------------------------
+# param probBackoff : an negative integer containing 
+#                     two doubles 
+#                     
+# return a vector of two doubles logprob, 
+#        backoffWeight
+#
+integer2stats <- function(probBackoff) {
+    
+    
+}
+
+
 ###################
 # Main
 #
