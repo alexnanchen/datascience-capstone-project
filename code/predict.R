@@ -1,11 +1,12 @@
 library(dplyr)
 library(data.table)
+library(hashFunction)
 library(testit)
 
 ###################
 # Environment
 #
-source("code/mod.R")
+source("code/lm.R")
 source("code/constants.R")
 
 READBUFFER       = 5000
