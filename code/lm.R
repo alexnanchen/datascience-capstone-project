@@ -97,23 +97,55 @@ double2int <- function(value) {
 }
 
 #-----------------------------------------------------
-# Some basic checks
+# Get log value associated with 'ngram'
 #-----------------------------------------------------
-# Could be implemented as a unit test.
-#
-testAll <- function() {
-    i1 <- -9.9999967; i2 <- -98.255557
-    print("Packing ") 
-    cat(" -->"); print(i1, digits=8)
-    cat(" -->"); print(i2, digits=8)
-    i <- stats2double(i1,i2); cat(" -->"); print(i, digits=20)
-    print(object.size(i))
-    cat("Unpacking", i, " ")
-    print(integer2stats(i), digits = 8)
-    cat("Hashing 'Hello économie'", ngram2hash("Hello économie"))
+# Ngram is assumed to be existing in model
+getLog <- function(ngram, model) {
+    
+}
+
+#-----------------------------------------------------
+# Get backoff value associated with 'ngram'
+#-----------------------------------------------------
+# Ngram is assumed to be existing in model
+getBow <- function(ngram, model) {
+    
+}
+
+#-----------------------------------------------------
+# Get log and backoff values associated with 'ngram'
+#-----------------------------------------------------
+# Ngram is assumed to be existing in model
+getLogBow <- function(ngram, model) {
+    
+}
+
+#-----------------------------------------------------
+# Check if 'ngram' is in model
+#-----------------------------------------------------
+isInModel <- function(ngram, model) {
+    
+}
+
+#-----------------------------------------------------
+# Get 'ngram' log prob, backing off as necessary
+#-----------------------------------------------------
+getNgramLog <- function(ngram, backoffWeight, model) {
+    
+    
 }
 
 ###################
-# Main
+# Public interface
 #
-#testAll()
+#-----------------------------------------------------
+# Get log probability of word at indice 'indice'
+#-----------------------------------------------------
+# param wordsList : a character vector
+#       indice    : an indice into the vector
+#       model     : a data table model
+# return the log prob of word at indice 'indice'
+getLog <- function(wordsList, indice, model) {
+    
+    
+}
