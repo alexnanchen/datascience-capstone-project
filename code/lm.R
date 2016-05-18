@@ -100,16 +100,16 @@ double2int <- function(value) {
 # Get log value associated with 'ngram'
 #-----------------------------------------------------
 # Ngram is assumed to be existing in model
-getLog <- function(ngram, model) {
-    
+getLogValue <- function(ngram, model) {
+    return(getLogBow(ngram, model)[1])
 }
 
 #-----------------------------------------------------
 # Get backoff value associated with 'ngram'
 #-----------------------------------------------------
 # Ngram is assumed to be existing in model
-getBow <- function(ngram, model) {
-    
+getBowValue <- function(ngram, model) {
+    return(getLogBow(ngram, model)[2])
 }
 
 #-----------------------------------------------------
@@ -117,20 +117,22 @@ getBow <- function(ngram, model) {
 #-----------------------------------------------------
 # Ngram is assumed to be existing in model
 getLogBow <- function(ngram, model) {
-    
+    h <- ngram2hash(ngram)
+    return(double2stats(model[ngram==h]$stats))
 }
 
 #-----------------------------------------------------
 # Check if 'ngram' is in model
 #-----------------------------------------------------
 isInModel <- function(ngram, model) {
-    
+    h <- ngram2hash(ngram)
+    return(nrow(model[ngram==h])>0)
 }
 
 #-----------------------------------------------------
 # Get 'ngram' log prob, backing off as necessary
 #-----------------------------------------------------
-getNgramLog <- function(ngram, backoffWeight, model) {
+getNgramLog_ <- function(ngram, backoffWeight, model) {
     
     
 }
@@ -145,7 +147,7 @@ getNgramLog <- function(ngram, backoffWeight, model) {
 #       indice    : an indice into the vector
 #       model     : a data table model
 # return the log prob of word at indice 'indice'
-getLog <- function(wordsList, indice, model) {
+getNgramLog <- function(wordsList, indice, model) {
     
     
 }

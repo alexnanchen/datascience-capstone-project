@@ -32,15 +32,15 @@ readModel <- function(fileName) {
     cat(nbLines, "lines to read into", nbBuffers, "buffers of", READBUFFER,"sizes\n")
     
     #Read all buffers
-    df <- NULL; skip <- 0
+    dt <- NULL; skip <- 0
     for (i in seq(1,nbBuffers)) {
-        df <- readBuffer(fileName, skip, df)
+        dt <- readBuffer(fileName, skip, dt)
         skip <- skip + READBUFFER
     } 
    
-    assert(nrow(df) == nbLines)
+    assert(nrow(dt) == nbLines)
     
-    return(data.table(df))
+    return(dt)
 }
 
 #-----------------------------------------------------
@@ -57,13 +57,14 @@ readBuffer <- function(fileName, skip, df) {
                         stringsAsFactors = F, nrow=READBUFFER, skip=skip))
     
     #Compress values to save memory space
-    dfBuffer <- compressBuffer(dfBuffer)
+    dfBuffer <- data.table(compressBuffer(dfBuffer))
     
     #Append buffer
     if (is.null(df))
         df <- dfBuffer
-    else
-        df <- bind_rows(df, dfBuffer)
+    else 
+        df <- rbindlist(list(df, dfBuffer))
+
     return(df)
 }
 
@@ -74,4 +75,8 @@ dt1 <- readModel("gram1.txt")
 dt2 <- readModel("gram2.txt")
 dt3 <- readModel("gram3.txt")
 
-model = list(gram1=dt1,gram2=dt2,gram3=dt3)
+#One table
+model = rbindlist(list(dt1,dt2,dt3))
+
+#Ordered index
+setkey(model,ngram)

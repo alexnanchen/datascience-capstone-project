@@ -8,6 +8,7 @@ library(tidyr)
 #
 source("code/mod.R")
 source("code/constants.R")
+source("code/lm.R")
 
 ###################
 # Implementation
