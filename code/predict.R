@@ -80,3 +80,8 @@ model = rbindlist(list(dt1,dt2,dt3))
 
 #Ordered index
 setkey(model,ngram)
+
+logValue <- getNgramLog(c("hello", "how", "are", "you"), 3, model, 3)
+print(logValue)
+
+

@@ -7,6 +7,7 @@ MODELPRECISION   = 6
 DOUBLEPRECISION  = 1000000     #Six digits
 MINLOGPROB       = -99.999999
 MAXINT           = DOUBLEPRECISION * trunc(-round(MINLOGPROB))
+DEBUG            = T
 
 ###################
 # Implementation
@@ -129,12 +130,44 @@ isInModel <- function(ngram, model) {
     return(nrow(model[ngram==h])>0)
 }
 
+
+#-----------------------------------------------------
+# Extract an n-gram ending at 'indice'
+#-----------------------------------------------------
+getNgramFromList <- function(wordsList, indice, maxorder) {
+    startIndice <- indice-maxorder+1
+    startIndice <- if(startIndice>0) startIndice else 1
+    return (paste(wordsList[startIndice:indice], collapse=" "))   
+}
+
 #-----------------------------------------------------
 # Get 'ngram' log prob, backing off as necessary
 #-----------------------------------------------------
 getNgramLog_ <- function(ngram, backoffWeight, model) {
+    #Some preparation
+    wordsList <- strsplit(ngram," ")[[1]]
+    order <- length(wordsList)
     
+    #Stop conditions: found or unknown
+    if (isInModel(ngram, model))
+        return(getLogValue(ngram,model))
+    else if (order<=1)
+        return(NULL)
     
+    #Backoff
+    order <- order - 1
+    ngram <- paste(wordsList[-1], collapse=" ")
+    backoffContext <- wordsList[-(length(wordsList))]
+    
+    if (isInModel(backoffContext, model))
+        bow <- getBowValue(backoffContext, model)
+    else
+        bow <- 0
+    
+    if(DEBUG)
+        cat("Backing off to level", order, "with bow of ", bow,"\n")
+    
+    return(getNgramLog_(ngram, backoffWeight + bow, model))
 }
 
 ###################
@@ -146,8 +179,10 @@ getNgramLog_ <- function(ngram, backoffWeight, model) {
 # param wordsList : a character vector
 #       indice    : an indice into the vector
 #       model     : a data table model
+#       maxorder  : the highest model order
 # return the log prob of word at indice 'indice'
-getNgramLog <- function(wordsList, indice, model) {
-    
-    
+getNgramLog <- function(wordsList, indice, model, maxorder) {
+    ngram <- getNgramFromList(wordsList, indice, maxorder)
+    if(DEBUG) cat("Get log probability for '", ngram, "'\n")
+    return(getNgramLog_(ngram,0.0, model))
 }
