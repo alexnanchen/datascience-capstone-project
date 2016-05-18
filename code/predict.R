@@ -81,7 +81,12 @@ model = rbindlist(list(dt1,dt2,dt3))
 #Ordered index
 setkey(model,ngram)
 
-logValue <- getNgramLog(c("hello", "how", "are", "you"), 3, model, 3)
+logValue <- getNgramLog(c("<s>", "how", "are", "you", "</s>"), 4, model, 3)
 print(logValue)
 
+sentence <- "join hands to create a safer environment"
+nbw <- length(strsplit(sentence," ")[[1]]) #End of sentence token
+ret <- getSentenceLog(sentence, model, 3)
 
+ppl1 <- 10^(-ret$totalLog /(nbw - ret$oov + 1))
+cat("Total log:", ret$totalLog, "- nb words:", nbw, "- oov:", ret$oov, "- ppl1:", ppl1, "\n")
