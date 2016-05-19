@@ -23,7 +23,7 @@ readSample <- function(fileName) {
     cat("Reading ", fileName,"\n")
     df <- tbl_df(read.table(fileName,allowEscapes = T, sep="|", stringsAsFactors = F)) %>%
         rename(text=V1)
-    df$text <- sapply(df$text, function(s) sprintf("<s> %s </s>",s))
+    df$text <- sapply(df$text, function(s) sprintf("%s",s))
     Encoding(df$text) <- "UTF-8"
     return(df)
 }
@@ -332,11 +332,11 @@ D2 = getDiscount(gram2)
 
 cat("Start training\n")
 #4-grams discounted probabilities, discout is D3
-#gram4 <- trainProb(gram4, D4)
+gram4 <- trainProb(gram4, D4)
 
 #3-grams discounted probabilities
-gram3 <- trainProb(gram3, D3)
-#gram3 <- trainContinuationProb(gram3, gram4, D3)
+#gram3 <- trainProb(gram3, D3)
+gram3 <- trainContinuationProb(gram3, gram4, D3)
 
 #2-grams discounted countinuation probabilities
 gram2 <- trainContinuationProb(gram2, gram3, D2)
@@ -346,7 +346,7 @@ gram2 <- trainContinuationProb(gram2, gram3, D2)
 gram1 <- trainContinuationProb(gram1, gram2, 0)
 
 #3-grams backoff weights, discount is D4
-#gram3 <- trainBackoffWeight(gram3, gram4, D4)
+gram3 <- trainBackoffWeight(gram3, gram4, D4)
 
 #2-grams backoff weights
 gram2 <- trainBackoffWeight(gram2, gram3, D3)
@@ -364,6 +364,7 @@ cat("Writing models to disk\n")
 writeModel(gram1)
 writeModel(gram2)
 writeModel(gram3)
+writeModel(gram4)
 
 rmobj(fileName)
 rmobj(srcFile)
