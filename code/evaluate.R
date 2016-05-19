@@ -2,7 +2,6 @@ library(dplyr)
 library(data.table)
 library(hashFunction)
 library(testit)
-library(tidyr)
 
 ###################
 # Environment
@@ -21,7 +20,7 @@ READBUFFER       = 5000
 # param fileName  : the n-gram text file
 # return a data table
 #
-readModel <- function(fileName, nbWords) {
+readModel <- function(fileName) {
     cat("Reading ", fileName,"\n")
     
     #File size in lines
@@ -35,7 +34,7 @@ readModel <- function(fileName, nbWords) {
     #Read all buffers
     dt <- NULL; skip <- 0
     for (i in seq(1,nbBuffers)) {
-        dt <- readBuffer(fileName, skip, dt, nbWords)
+        dt <- readBuffer(fileName, skip, dt)
         skip <- skip + READBUFFER
     } 
    
@@ -52,29 +51,13 @@ readModel <- function(fileName, nbWords) {
 #       df        : where to append the rows buffer
 # return a data frame
 #
-readBuffer <- function(fileName, skip, df, nbWords) {
+readBuffer <- function(fileName, skip, df) {
     #Read in memory buffer
     dfBuffer <- tbl_df(read.table(fileName,allowEscapes = T, sep="|", 
                         stringsAsFactors = F, nrow=READBUFFER, skip=skip))
     
-    into <- sapply(seq(1,nbWords),function(x) sprintf("w%s", x))
-    
-    #No context for unigrams
-    if (length(into) > 1) {
-        dfBuffer <- tidyr::unite_(separate_(dfBuffer,"V1",into=into,sep=" "), col=c("context"), 
-                                  from=into[-length(into)], sep=" ")
-    
-        #Word column
-        if ("V3" %in% names(dfBuffer))
-            dfBuffer <- dplyr::rename_(dfBuffer, word=into[length(into)], logprob="V2", backoffWeight="V3")
-        else
-            dfBuffer <- dplyr::rename_(dfBuffer, word=into[length(into)], logprob="V2")
-        
-        #Compress values to save memory space
-        dfBuffer$context <- apply(dfBuffer, 1, function(x) return(ngram2hash(x["context"])))
-            
-    } else
-        dfBuffer <- dplyr::rename_(dfBuffer,word="V1",logprob="V2", backoffWeight="V3")
+    #Compress values to save memory space
+    dfBuffer <- data.table(compressBuffer(dfBuffer))
     
     #Append buffer
     if (is.null(df))
@@ -88,7 +71,22 @@ readBuffer <- function(fileName, skip, df, nbWords) {
 ###################
 # Main
 #
-dt1 <- readModel("gram1.txt",1)
-dt2 <- readModel("gram2.txt",2)
-dt3 <- readModel("gram3.txt",3)
+dt1 <- readModel("gram1.txt")
+dt2 <- readModel("gram2.txt")
+dt3 <- readModel("gram3.txt")
 
+#One table
+model = rbindlist(list(dt1,dt2,dt3))
+
+#Ordered index
+setkey(model,ngram)
+
+logValue <- getNgramLog(c("<s>", "how", "are", "you", "</s>"), 4, model, 3)
+print(logValue)
+
+sentence <- "join hands to create a safer environment"
+nbw <- length(strsplit(sentence," ")[[1]]) #End of sentence token
+ret <- getSentenceLog(sentence, model, 3)
+
+ppl1 <- 10^(-ret$totalLog /(nbw - ret$oov + 1))
+cat("Total log:", ret$totalLog, "- nb words:", nbw, "- oov:", ret$oov, "- ppl1:", ppl1, "\n")
