@@ -189,5 +189,8 @@ l <- list(dt1, dt2, dt3, dt4)
 #print(getBackoffWeight(dt3,"source of many"))
 
 dfResult <- predict("what do you")
-print(arrange(dfResult, desc(order), desc(logprob)))
+dfResult <- group_by(dfResult,word) %>% summarize(mean=mean(logprob), 
+                maxorder=max(order)) %>% arrange(desc(maxorder), desc(mean))
+
+print(dfResult)
 
