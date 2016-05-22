@@ -51,7 +51,7 @@ readModel <- function(fileName, nbWords) {
 #       fileName : where to save the model
 saveModel <- function(dt, fileName) {
     cat("Save model to", fileName, "\n")
-    write.table(dt, fileName, col.names = F, row.names = F, sep="|", quote=T,
+    write.table(dt, fileName, col.names = T, row.names = F, sep="|", quote=T,
                 qmethod="double", fileEncoding = 'utf-8')
 }
 
@@ -197,7 +197,7 @@ l <- list(dt1, dt2, dt3, dt4)
 saveModel(dt1, "gram1c.txt")
 saveModel(dt2, "gram2c.txt")
 saveModel(dt3, "gram3c.txt")
-saveModel(dt3, "gram4c.txt")
+saveModel(dt4, "gram4c.txt")
 
 #print(getBackoffWeight(dt3,"source of many"))
 
