@@ -56,6 +56,17 @@ saveModel <- function(dt, fileName) {
 }
 
 #-----------------------------------------------------
+# Read a compress model from disk
+#-----------------------------------------------------
+# param fileName : compress model
+readCompressed <- function(fileName) {
+    cat("Reading model", fileName, "\n")
+    dtCompressed <- read.table(fileName,allowEscapes = T, sep="|", 
+                               stringsAsFactors = F)
+    return(dtCompressed)
+}
+
+#-----------------------------------------------------
 # Read a buffer of n-grams
 #-----------------------------------------------------
 # param fileName  : the n-gram text file
