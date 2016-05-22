@@ -45,6 +45,17 @@ readModel <- function(fileName, nbWords) {
 }
 
 #-----------------------------------------------------
+# Save a compress model to disk
+#-----------------------------------------------------
+# param dt       : a data table
+#       fileName : where to save the model
+saveModel <- function(dt, fileName) {
+    cat("Save model to", fileName, "\n")
+    write.table(dt, fileName, col.names = F, row.names = F, sep="|", quote=T,
+                qmethod="double", fileEncoding = 'utf-8')
+}
+
+#-----------------------------------------------------
 # Read a buffer of n-grams
 #-----------------------------------------------------
 # param fileName  : the n-gram text file
@@ -163,34 +174,23 @@ getBackoffWeight <- function(dtLower, backoffContext) {
     return(filteredDt$backoffWeight)
 }
 
-#-----------------------------------------------------
-# Retrieve the diff with unigrams
-#-----------------------------------------------------
-# param dt1     : the unigram table
-#       dtRight : the table to diff
-# return a table of words missing from dtRight
-#
-unigramDiff <- function(dt1, dtRight) {
-    dtMissing <- suppressWarnings(merge(dt1, dtRight, by.x="word", by.y="word", 
-                                        all.x = T)[is.na(logprob.y)])
-    return(dtMissing[,.(word)])
-}
-
 ###################
 # Main
 #
-
 dt1 <- readModel("gram1.txt",1)
 dt2 <- readModel("gram2.txt",2)
 dt3 <- readModel("gram3.txt",3)
 dt4 <- readModel("gram4.txt",4)
 l <- list(dt1, dt2, dt3, dt4)
 
+saveModel(dt1, "gram1c.txt")
+saveModel(dt2, "gram2c.txt")
+saveModel(dt3, "gram3c.txt")
+saveModel(dt3, "gram4c.txt")
+
 #print(getBackoffWeight(dt3,"source of many"))
 
 dfResult <- predict("what do you")
 dfResult <- group_by(dfResult,word) %>% summarize(mean=mean(logprob), 
                 maxorder=max(order)) %>% arrange(desc(maxorder), desc(mean))
-
 print(dfResult)
-
