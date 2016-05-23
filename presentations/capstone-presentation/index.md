@@ -19,6 +19,7 @@ knit        : slidify::knit2slides
     <hr>
     <h3>Data-science Capstone project</h3>
     <h4>Alexandre Nanchen</h4>
+    <img style="margin-left:40px;margin-top:80px;" src="images/logos.png">
 </div>
 
 --- .class 
@@ -26,7 +27,7 @@ knit        : slidify::knit2slides
 ## The task
 
 1. Next word prediction using statistical n-gram models
-2. Implementation and evaluation
+2. Model implementation and evaluation
 3. Challenges
    - Large amount of data preparation, filtering and tokenization
    - Reduced language model memory footprint
@@ -44,7 +45,6 @@ knit        : slidify::knit2slides
    - Continuation probability
    - Fix KNeser-Ney smoothing
 5. Perplexity comparison with other toolkits (srilm, mitlm and irstlm)
-<img style="margin-left:100px;" src="images">
 
 ---
 
@@ -60,6 +60,6 @@ knit        : slidify::knit2slides
 ### Word prediction web app
 1. Top 10 words display
 2. Verbose mode to see algorithm in action
-3. Word cloud display
+3. Word cloud display to see 50 top words
 
 [Next word prediction web application]()
