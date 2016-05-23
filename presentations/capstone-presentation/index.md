@@ -29,6 +29,7 @@ knit        : slidify::knit2slides
 1. Next word prediction using statistical n-gram models
 2. Model implementation and evaluation
 3. Challenges
+   - Good generalization
    - Large amount of data preparation, filtering and tokenization
    - Reduced language model memory footprint
    - Prediction reactivity
@@ -42,18 +43,20 @@ knit        : slidify::knit2slides
 2. Vocabulary selection to retain 90% of the occurences
 3. Out of vocabulary modeling unsing \<unk\> symbol
 4. KNeser-Ney backoff model of order 4
-   - Continuation probability
+   - Continuation probabilities
    - Fix KNeser-Ney smoothing
 5. Perplexity comparison with other toolkits (srilm, mitlm and irstlm)
+6. Final perplexity achieved is ...
 
 ---
 
 ### Predictive algorithm
 
-1. Model compression during loading trough ngram hashing
+1. Model compression during loading trough N-gram hashing
 2. Memory footpring reduction of a factor of 2.82
 3. Selection of most probable words for each N-gram order using backoff weights and continuation probabilities
 4. Averaging of probability trough all N-gram orders
+5. Order by decreasing N-gram order
 
 ---
 

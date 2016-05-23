@@ -34,6 +34,7 @@
 <li>Challenges
 
 <ul>
+<li>Good generalization</li>
 <li>Large amount of data preparation, filtering and tokenization</li>
 <li>Reduced language model memory footprint</li>
 <li>Prediction reactivity</li>
@@ -52,10 +53,11 @@
 <li>KNeser-Ney backoff model of order 4
 
 <ul>
-<li>Continuation probability</li>
+<li>Continuation probabilities</li>
 <li>Fix KNeser-Ney smoothing</li>
 </ul></li>
 <li>Perplexity comparison with other toolkits (srilm, mitlm and irstlm)</li>
+<li>Final perplexity achieved is ...</li>
 </ol>
 
 </article>
@@ -63,10 +65,11 @@
 <article class="" id="slide-4" style="background:;">
   <h3>Predictive algorithm</h3>
   <ol>
-<li>Model compression during loading trough ngram hashing</li>
+<li>Model compression during loading trough N-gram hashing</li>
 <li>Memory footpring reduction of a factor of 2.82</li>
 <li>Selection of most probable words for each N-gram order using backoff weights and continuation probabilities</li>
 <li>Averaging of probability trough all N-gram orders</li>
+<li>Order by decreasing N-gram order</li>
 </ol>
 
 </article>
