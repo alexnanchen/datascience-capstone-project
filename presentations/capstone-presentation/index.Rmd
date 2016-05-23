@@ -1,0 +1,62 @@
+---
+title       : Word prediction pitch
+subtitle    : Web application for data
+author      : Alexandre Nanchen
+job         : 
+framework   : html5slides   # {io2012, html5slides, shower, dzslides, ...}
+highlighter : highlight.js  # {highlight.js, prettify, highlight}
+hitheme     : tomorrow      # 
+widgets     : []            # {mathjax, quiz, bootstrap}
+mode        : selfcontained # {standalone, draft}
+knit        : slidify::knit2slides
+
+---
+
+## &nbsp;
+
+<div id="outer" style="position:relative; top:-175px">  
+    <h1>Word prediction pitch</h1>
+    <hr>
+    <h3></h3>
+    <h4>Alexandre Nanchen</h4>
+</div>
+
+--- .class 
+
+## The task
+
+1. Next word prediction using statistical n-gram model
+2. 
+
+
+<img style="margin-left:100px;" src="images/data-science-small.jpg">
+
+---
+
+## Training
+
+1. HC corpora data
+2. Vocabulary selection to retain 90% of the occurences
+3. Out of vocabulary modeling unsing <unk> symbol
+4. KNeser-Ney backoff model or order 4
+---
+
+### Algorithm
+
+1. 
+
+
+```{r, echo=F}
+data(swiss)
+head(swiss[1:4], n=5)
+```
+
+---
+
+### Word prediction web app
+
+1. Functionalities
+   - Variable exploration
+   - 
+3. [Next word prediction web application]()
+
