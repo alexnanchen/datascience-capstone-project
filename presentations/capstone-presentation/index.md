@@ -1,5 +1,5 @@
 ---
-title       : Swiss dataset pitch
+title       : Word prediction pitch
 subtitle    : Web application for data
 author      : Alexandre Nanchen
 job         : 
@@ -15,56 +15,51 @@ knit        : slidify::knit2slides
 ## &nbsp;
 
 <div id="outer" style="position:relative; top:-175px">  
-    <h1>Swiss dataset pitch</h1>
+    <h1>Next word prediction Web App</h1>
     <hr>
-    <h3>Web application for data</h3>
+    <h3>Data-science Capstone project</h3>
     <h4>Alexandre Nanchen</h4>
 </div>
 
 --- .class 
 
-## Background
+## The task
 
-1. Data exploration trough dynamic display
-2. Data visualization with html layouts
-3. Reproducibility with web applications
-
-<img style="margin-left:100px;" src="images/data-science-small.jpg">
-
----
-
-## Motivations
-
-1. Population fertility understanding
-2. Population fertility factors investigation
-3. Negative and positive factors that influence population fertility
+1. Next word prediction using statistical n-gram models
+2. Implementation and evaluation
+3. Challenges
+   - Large amount of data preparation, filtering and tokenization
+   - Reduced language model memory footprint
+   - Prediction reactivity
+   - Robustness to unknown words
 
 ---
 
-### Swiss data set
+## Training
 
-1. Swiss Fertility and Socioeconomic Indicators (1888) Data
-2. The data collected are for 47 French-speaking “provinces” at about 1888.
-3. Here, all variables are scaled to [0, 100], where in the original, all but "Catholic" were scaled to [0, 1].
-4. Some variables (more to be found on the web app)
-
-
-```
-##              Fertility Agriculture Examination Education
-## Courtelary        80.2        17.0          15        12
-## Delemont          83.1        45.1           6         9
-## Franches-Mnt      92.5        39.7           5         5
-## Moutier           85.8        36.5          12         7
-## Neuveville        76.9        43.5          17        15
-```
+1. HC corpora data: blogs, news and twitter (> 100 Mio words) 
+2. Vocabulary selection to retain 90% of the occurences
+3. Out of vocabulary modeling unsing \<unk\> symbol
+4. KNeser-Ney backoff model of order 4
+   - Continuation probability
+   - Fix KNeser-Ney smoothing
+5. Perplexity comparison with other toolkits (srilm, mitlm and irstlm)
+<img style="margin-left:100px;" src="images">
 
 ---
 
-### Swiss data web app
+### Predictive algorithm
 
-1. One screen web application to investigate population fertility factors
-2. Functionalities
-   - Variable exploration
-   - Linear fitting exploration
-3. [Swiss data web application](https://alexnanchen.shinyapps.io/swissdatawebapp/)
+1. Model compression during loading trough ngram hashing
+2. Memory footpring reduction of a factor of 2.82
+3. Selection of most probable words for each N-gram order using backoff weights and continuation probabilities
+4. Averaging of probability trough all N-gram orders
 
+---
+
+### Word prediction web app
+1. Top 10 words display
+2. Verbose mode to see algorithm in action
+3. Word cloud display
+
+[Next word prediction web application]()

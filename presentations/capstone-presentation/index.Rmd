@@ -15,9 +15,9 @@ knit        : slidify::knit2slides
 ## &nbsp;
 
 <div id="outer" style="position:relative; top:-175px">  
-    <h1>Word prediction pitch</h1>
+    <h1>Next word prediction Web App</h1>
     <hr>
-    <h3></h3>
+    <h3>Data-science Capstone project</h3>
     <h4>Alexandre Nanchen</h4>
 </div>
 
@@ -25,38 +25,41 @@ knit        : slidify::knit2slides
 
 ## The task
 
-1. Next word prediction using statistical n-gram model
-2. 
-
-
-<img style="margin-left:100px;" src="images/data-science-small.jpg">
+1. Next word prediction using statistical n-gram models
+2. Implementation and evaluation
+3. Challenges
+   - Large amount of data preparation, filtering and tokenization
+   - Reduced language model memory footprint
+   - Prediction reactivity
+   - Robustness to unknown words
 
 ---
 
 ## Training
 
-1. HC corpora data
+1. HC corpora data: blogs, news and twitter (> 100 Mio words) 
 2. Vocabulary selection to retain 90% of the occurences
-3. Out of vocabulary modeling unsing <unk> symbol
-4. KNeser-Ney backoff model or order 4
+3. Out of vocabulary modeling unsing \<unk\> symbol
+4. KNeser-Ney backoff model of order 4
+   - Continuation probability
+   - Fix KNeser-Ney smoothing
+5. Perplexity comparison with other toolkits (srilm, mitlm and irstlm)
+<img style="margin-left:100px;" src="images">
+
 ---
 
-### Algorithm
+### Predictive algorithm
 
-1. 
-
-
-```{r, echo=F}
-data(swiss)
-head(swiss[1:4], n=5)
-```
+1. Model compression during loading trough ngram hashing
+2. Memory footpring reduction of a factor of 2.82
+3. Selection of most probable words for each N-gram order using backoff weights and continuation probabilities
+4. Averaging of probability trough all N-gram orders
 
 ---
 
 ### Word prediction web app
+1. Top 10 words display
+2. Verbose mode to see algorithm in action
+3. Word cloud display to see 50 top words
 
-1. Functionalities
-   - Variable exploration
-   - 
-3. [Next word prediction web application]()
-
+[Next word prediction web application]()

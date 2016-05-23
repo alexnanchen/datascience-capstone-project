@@ -2,8 +2,8 @@
 <html>
 <head>
 	<meta charset='utf-8'>
-	<title>Swiss dataset pitch</title>
-	<meta name="description" content="Swiss dataset pitch">
+	<title>Word prediction pitch</title>
+	<meta name="description" content="Word prediction pitch">
 	<meta name="author" content="Alexandre Nanchen">
 	<meta name="generator" content="slidify" />
 	
@@ -17,67 +17,69 @@
      <article class="" id="slide-1" style="background:;">
   <h3>&nbsp;</h3>
   <div id="outer" style="position:relative; top:-175px">  
-    <h1>Swiss dataset pitch</h1>
+    <h1>Next word prediction Web App</h1>
     <hr>
-    <h3>Web application for data</h3>
+    <h3>Data-science Capstone project</h3>
     <h4>Alexandre Nanchen</h4>
 </div>
 
 </article>
 
 <article class="class" id="slide-2" style="background:;">
-  <h3>Background</h3>
+  <h3>The task</h3>
   <ol>
-<li>Data exploration trough dynamic display</li>
-<li>Data visualization with html layouts</li>
-<li>Reproducibility with web applications</li>
-</ol>
+<li>Next word prediction using statistical n-gram models</li>
+<li>Implementation and evaluation</li>
+<li>Challenges
 
-<p><img style="margin-left:100px;" src="images/data-science-small.jpg"></p>
+<ul>
+<li>Large amount of data preparation, filtering and tokenization</li>
+<li>Reduced language model memory footprint</li>
+<li>Prediction reactivity</li>
+<li>Robustness to unknown words</li>
+</ul></li>
+</ol>
 
 </article>
 
 <article class="" id="slide-3" style="background:;">
-  <h3>Motivations</h3>
+  <h3>Training</h3>
   <ol>
-<li>Population fertility understanding</li>
-<li>Population fertility factors investigation</li>
-<li>Negative and positive factors that influence population fertility</li>
+<li>HC corpora data: blogs, news and twitter (&gt; 100 Mio words) </li>
+<li>Vocabulary selection to retain 90% of the occurences</li>
+<li>Out of vocabulary modeling unsing &lt;unk&gt; symbol</li>
+<li>KNeser-Ney backoff model of order 4
+
+<ul>
+<li>Continuation probability</li>
+<li>Fix KNeser-Ney smoothing</li>
+</ul></li>
+<li>Perplexity comparison with other toolkits (srilm, mitlm and irstlm)
+<img style="margin-left:100px;" src="images"></li>
 </ol>
 
 </article>
 
 <article class="" id="slide-4" style="background:;">
-  <h3>Swiss data set</h3>
+  <h3>Predictive algorithm</h3>
   <ol>
-<li>Swiss Fertility and Socioeconomic Indicators (1888) Data</li>
-<li>The data collected are for 47 French-speaking “provinces” at about 1888.</li>
-<li>Here, all variables are scaled to [0, 100], where in the original, all but &quot;Catholic&quot; were scaled to [0, 1].</li>
-<li>Some variables (more to be found on the web app)</li>
+<li>Model compression during loading trough ngram hashing</li>
+<li>Memory footpring reduction of a factor of 2.82</li>
+<li>Selection of most probable words for each N-gram order using backoff weights and continuation probabilities</li>
+<li>Averaging of probability trough all N-gram orders</li>
 </ol>
-
-<pre><code>##              Fertility Agriculture Examination Education
-## Courtelary        80.2        17.0          15        12
-## Delemont          83.1        45.1           6         9
-## Franches-Mnt      92.5        39.7           5         5
-## Moutier           85.8        36.5          12         7
-## Neuveville        76.9        43.5          17        15
-</code></pre>
 
 </article>
 
 <article class="" id="slide-5" style="background:;">
-  <h3>Swiss data web app</h3>
+  <h3>Word prediction web app</h3>
   <ol>
-<li>One screen web application to investigate population fertility factors</li>
-<li>Functionalities
-
-<ul>
-<li>Variable exploration</li>
-<li>Linear fitting exploration</li>
-</ul></li>
-<li><a href="https://alexnanchen.shinyapps.io/swissdatawebapp/">Swiss data web application</a></li>
+<li>Top 10 words display</li>
+<li>Verbose mode to see algorithm in action</li>
+<li>Word cloud display</li>
 </ol>
+
+<p><a href="">Next word prediction web application</a></p>
 
 </article>
 
