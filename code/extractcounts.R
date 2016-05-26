@@ -167,7 +167,7 @@ writeCounts(gram1, "counts1.txt")
 rmobj("gram1"); runGC()
 
 cat("Re-extract ngrams\n")
-ngramList <- text2ngram(sentences, ngramOrders = c(1,2,3,4), minCounts = c(3,2,1,0))
+ngramList <- text2ngram(sentences, ngramOrders = c(1,2,3,4), minCounts = c(3,2,1,1))
 gram1 <- ngramList[[1]]
 gram2 <- ngramList[[2]]
 gram3 <- ngramList[[3]]
