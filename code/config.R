@@ -1,6 +1,12 @@
 ####################
 # Directories
 #
+#Virtual machine RWeka
+options(java.parameters = "-Xmx8048m" )
+
+# Sets the default number of threads to use
+options(mc.cores=1)
+
 scriptDir <- sys.frame(1)$ofile
 
 PROJECTDIR = normalizePath(sprintf("%s/..", dirname(scriptDir)))

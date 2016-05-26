@@ -10,8 +10,16 @@ source("code/config.R")
 # Utility function to remove an object
 #-----------------------------------------------------
 rmobj <- function(obj) {
-    if (exists(obj))
-        rm(obj)
+    if (exists(obj)) {
+        rm(list=obj, envir =.GlobalEnv)
+    }
+}
+
+#-----------------------------------------------------
+# Utility function to give back memory to OS
+#-----------------------------------------------------
+runGC <- function() {
+    for(i in seq(1,10)) gc()
 }
 
 #-----------------------------------------------------
