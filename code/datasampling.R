@@ -48,6 +48,7 @@ sampleSentences <- function(df, sampleSize) {
     dfSelected <- NULL
     for (dfclass in sentByLengthList) {
         nbSentencesClass <- floor(sampleSize * (nrow(dfclass)/totalSentences))
+        #nbSentencesClass <- nrow(dfclass)
         cat("Selecting ", nbSentencesClass, "out of", sampleSize, "\n")
         
         if (is.null(dfSelected))
@@ -61,7 +62,7 @@ sampleSentences <- function(df, sampleSize) {
 ###################
 # Main
 #
-MAXSENTPERSRC = 1000
+MAXSENTPERSRC = 100000
 
 for (lang in LANGUAGES) {
     for (src in SOURCES) {

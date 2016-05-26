@@ -124,8 +124,8 @@ updateUnknownWords <- function(gram1, sentences) {
 #
 writeCounts <- function(ngram, fileName) {
     cat("Writing", nrow(ngram), "counts for", fileName, "\n")
-    write.table(ngram, fileName, quote=F, sep="\t", row.names=F,
-                col.names=T, fileEncoding = "UTF-8")
+    write.table(ngram, fileName, sep="\t", row.names = F, col.names = T, quote=T,
+                fileEncoding = "UTF-8")
 }
 
 ###################
@@ -147,17 +147,27 @@ for (src in SOURCES) {
 cat("N-gram extraction\n")
 print("  --> Update unknown words")
 gram1 <- text2ngram(sentences, ngramOrders = c(1), minCounts = c(3))[[1]]
+writeCounts(gram1,"counts1.txt")
+
+readline("Please check 'counts1.txt' file ")
+gram1 <- data.table(read.table("counts1.txt", header=T, allowEscapes = T, sep="\t",
+                    stringsAsFactors = F))
+
+print(head(gram1))
+
+#Obfuscate unknown words
 sentences <- updateUnknownWords(gram1, sentences)
 
 #Save sentences
 write.table(sentences, "training.txt", quote=F, sep="\t", row.names=F,
             col.names=F, fileEncoding = "UTF-8")
+writeCounts(gram1, "counts1.txt")
 
 #Clean some memory
 rmobj("gram1"); runGC()
 
 cat("Re-extract ngrams\n")
-ngramList <- text2ngram(sentences, ngramOrders = c(1,2,3,4), minCounts = c(3,2,1,1))
+ngramList <- text2ngram(sentences, ngramOrders = c(1,2,3,4), minCounts = c(3,2,1,0))
 gram1 <- ngramList[[1]]
 gram2 <- ngramList[[2]]
 gram3 <- ngramList[[3]]

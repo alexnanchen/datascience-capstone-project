@@ -52,8 +52,8 @@ readAllSamples <- function() {
 #
 mapUtf8Characters <- function(strText, utf8List) {
     for (v in utf8List) {
-        #print(sprintf("%s %s %s",v[1], v[2], v[3]))
-        strText <- gsub(enc2utf8(v[1]), enc2utf8(v[2]), enc2utf8(strText), perl = T)
+        print(sprintf("%s %s %s",v[1], v[2], v[3]))
+        strText <- gsub(enc2utf8(v[1]), enc2utf8(v[2]), enc2utf8(strText), fixed = T)
     }
     return(strText)
 }
@@ -94,11 +94,17 @@ cleanSentences <- function(df, offensiveWords, destFile) {
     #
     cat("  --> Other replacement")
     c <- VCorpus(VectorSource(strText))
+    print("To lower")
     c <- tm_map(c, tolower)
+    print("removeNumbers")
     c <- tm_map(c, removeNumbers)
+    print("Remove punctuation")
     c <- tm_map(c, removePunctuation)
+    print("stripWhitespace")
     c <- tm_map(c, stripWhitespace)
+    print("Plain text document")
     c <- tm_map(c, PlainTextDocument)
+    print("Removing offensive words")
     c <- tm_map(c, removeWords, offensiveWords)
  
     #Resegment into sentences   
