@@ -145,12 +145,12 @@ for (src in SOURCES) {
 
 #Build ngram frequency table
 cat("N-gram extraction\n")
-print("  --> Update unknown words")
+print("  --> Vocabulary extraction")
 gram1 <- text2ngram(sentences, ngramOrders = c(1), minCounts = c(3))[[1]]
-writeCounts(gram1,"counts1.txt")
+writeCounts(gram1,"vocabulary.txt")
 
-readline("Please check 'counts1.txt' file ")
-gram1 <- data.table(read.table("counts1.txt", header=T, allowEscapes = T, sep="\t",
+readline("Please check 'vocabulary.txt' file ")
+gram1 <- data.table(read.table("vocabulary.txt", header=T, allowEscapes = T, sep="\t",
                     stringsAsFactors = F))
 
 print(head(gram1))
@@ -166,8 +166,9 @@ writeCounts(gram1, "counts1.txt")
 #Clean some memory
 rmobj("gram1"); runGC()
 
-cat("Re-extract ngrams\n")
-ngramList <- text2ngram(sentences, ngramOrders = c(1,2,3,4), minCounts = c(3,2,1,1))
+cat("Re-extract ngrams on text with <unk> words\n")
+#No token filtering here. One and two counts are needed for discount computation
+ngramList <- text2ngram(sentences, ngramOrders = c(1,2,3,4), minCounts = c(0,0,0,0))
 gram1 <- ngramList[[1]]
 gram2 <- ngramList[[2]]
 gram3 <- ngramList[[3]]
