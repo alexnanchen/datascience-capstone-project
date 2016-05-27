@@ -3,6 +3,7 @@ library(data.table)
 library(hashFunction)
 library(testit)
 library(tidyr)
+library(stringi)
 
 ###################
 # Environment
@@ -30,7 +31,7 @@ readCompressed <- function(fileName) {
 # Predict using backing off
 #-----------------------------------------------------
 predict <- function(ngramContext, backoffWeight=0, dfResult=data.frame()) {
-    #In with table should we search
+    #In witch table should we search
     order=1
     if(length(ngramContext)!=0)
         order <- length(strsplit(ngramContext, split = " ")[[1]]) + 1
@@ -40,7 +41,7 @@ predict <- function(ngramContext, backoffWeight=0, dfResult=data.frame()) {
         if(!is.na(backoffWeight)) {
             debug(paste0("Search for next word with context >",ngramContext," *<\n"))
             dfResult <- bind_rows(dfResult, dplyr::select(l[[order]], word, logprob) %>% 
-                            mutate(logprob=logprob+backoffWeight, order=order))
+                                      mutate(logprob=logprob+backoffWeight, order=order))
             debug(sprintf("  =====> Added backoff weight of %f to %d results\n", backoffWeight, 
                           nrow(l[[order]])))
         }
@@ -114,25 +115,43 @@ debug <- function(strMessage) {
 }
 
 #-----------------------------------------------------
+# Replace unknown words by <unk>
+#-----------------------------------------------------
+replaceUnknown <- function(wordsList) {
+    for (i in seq(1, length(wordsList))) {
+        print(head(dictionary))
+        w <- wordsList[i]
+        if (nrow(dictionary[word1==w])==0)
+            wordsList[i] <- stri_enc_toutf8("<unk>")
+    }
+    return(wordsList)
+}
+
+#-----------------------------------------------------
 # Predict next word from a sentence input
 #-----------------------------------------------------
 # param strSentence : a sequence of words
 # return an ordered data frame
 #
 predictNextWord <- function(strSentence, maxOrder=4) {
+    wordsList <- replaceUnknown(strsplit(strSentence, " ")[[1]])
+    startIndice <- max(length(wordsList)-maxOrder+2, 0)
+    ngramContext <- paste(wordsList[startIndice:length(wordsList)], collapse=" ")
     log <<- c()
-    dfResult <- predict(strSentence) %>% dplyr::filter(!word%in% c("<unk>"))
+    dfResult <- predict(ngramContext) %>% dplyr::filter(!word%in% c("<unk>"))
     dfResult <- group_by(dfResult,word) %>% summarize(mean=mean(logprob), 
                         maxorder=max(order)) %>% arrange(desc(maxorder), desc(mean))
     return(list(dfResult=head(dfResult,50), log=log))
 }
 
 #Load once all models
-MODELDIR <- "/Users/alexnanchen/data-science"
+MODELDIR <- "models"
 dt1 <- readCompressed(paste0(MODELDIR,"/gram1c.txt"))
 dt2 <- readCompressed(paste0(MODELDIR,"/gram2c.txt"))
 dt3 <- readCompressed(paste0(MODELDIR,"/gram3c.txt"))
 dt4 <- readCompressed(paste0(MODELDIR,"/gram4c.txt"))
 
 l <- list(dt1, dt2, dt3, dt4)
+dictionary <- fread(paste0(MODELDIR,"/vocabulary.txt"), sep="\t", header=T, 
+                    stringsAsFactors = F, encoding = "UTF-8")
 

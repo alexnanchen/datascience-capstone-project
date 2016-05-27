@@ -22,7 +22,8 @@ shinyUI(
                     br(style="margin: 20px 0;"),
                     h4("Examples sentences:"),
                     p(span("how are you", class="sentence"),br(),
-                      span("what is the", class="sentence"))
+                      span("what is the", class="sentence"), br(),
+                      span("a good", class="sentence"))
                      ),
                   
                   mainPanel(
