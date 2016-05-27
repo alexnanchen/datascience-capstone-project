@@ -19,45 +19,11 @@ source("code/lm.R")
 # param fileName  : the source text file
 # return a data frame of sentences and words count
 #
-readSample <- function(fileName) {
+readCounts <- function(fileName) {
     cat("Reading ", fileName,"\n")
-    df <- tbl_df(read.table(fileName,allowEscapes = T, sep="|", stringsAsFactors = F)) %>%
-        rename(text=V1)
-    df$text <- sapply(df$text, function(s) sprintf("%s",s))
-    Encoding(df$text) <- "UTF-8"
-    return(df)
-}
-
-#-----------------------------------------------------
-# Build a list of n-gram frequency tables
-#-----------------------------------------------------
-# param sentences   : a character vector
-#       ngramOrders : a numeric vector
-# return a list of data tables
-#
-text2ngram <- function(sentences, ngramOrders=c(1)) {
-    ngramList <- list()
-    for (order in ngramOrders) {
-        ngramTokenizer <- function(x) NGramTokenizer(x, Weka_control(min = order, max = order))
-        #Build counts
-        ngrams <- as.data.frame(table(as.vector(unlist(lapply(sentences, ngramTokenizer)))),
-                                stringsAsFactors=F)
-        names(ngrams)[1] <- "token"
-        
-        #Check all same order
-        filteredIndices <- which(sapply(ngrams$token,function(s) {length(strsplit(s," ")[[1]])}!=order))
-        if (length(filteredIndices) > 0)
-            ngrams <- ngrams[-filteredIndices,]
-    
-        #Re-order
-        ngrams <- dplyr::select(ngrams, token, freq=Freq)
-        #Split token into words
-        colNames <- sapply(seq(1,order), function(s) paste0("word",s))
-        ngrams <- tidyr::separate(ngrams,"token",colNames," ")
-        #Add to list
-        ngramList[[sprintf("%d-gram",order)]] <- data.table(ngrams)
-    }
-    return(ngramList)
+    df <- tbl_df(read.table(fileName, header=T, allowEscapes = T, sep="\t", stringsAsFactors = F, 
+                 fileEncoding = "UTF-8", encoding = "UTF-8"))
+    return(as.data.table(df))
 }
 
 #-----------------------------------------------------
@@ -99,19 +65,31 @@ getMarginalizedCount <- function(dt, fixedIndices = c(1), cCount = F, col="freq"
 #       discount : a fixed discount
 # return a data table with a log10 probability column
 #
-trainProb <- function(dt, discount) {
+trainProb <- function(dt, mincount=0) {
     wIndices <- grep("word*",names(dt))
     order <- length(wIndices)
+    
     cat("###### Normal counts, order", order, "\n")
+    #Discount on effective counts and on unpruned ngrams
+    discount <- getDiscount(dt, col = "freq")
+    cat("  --> Using discount value of", discount, "\n")
+    #Model pruning before marginalization count
+    cat("  --> Prune with min count value of", mincount,"\n")
+    dt <- dt[freq>mincount]
+    
+    #Model estimation
+    cat("  --> Get marginalized counts\n")
     fixedIndices = wIndices[-order]
     ret <- getMarginalizedCount(dt, fixedIndices, F)
     setkeyv(dt, ret$colNames)
     dt <-  suppressWarnings(merge(dt, ret$index, all.x=T))
     #print(head(dt))
+    cat("  --> Compute probabilities\n")
     setnames(dt, "freq.x", "freq")
     setnames(dt, "freq.y", "totalMarginalized")
+    #Probability computation
     dt$logprob <- log10(pmax(dt$freq-discount,0)/dt$totalMarginalized)
-    return(dt)
+    return(list(dt=dt,discount=discount))
 }
 
 #-----------------------------------------------------
@@ -124,7 +102,7 @@ trainProb <- function(dt, discount) {
 #       discount : a fixed discount
 # return a data table with a probability column
 #
-trainContinuationProb <- function(dtLower, dtHigher, discount) {
+trainContinuationProb <- function(dtLower, dtHigher, mincount=0) {
     wIndicesLower <- grep("word*",names(dtLower))
     wIndicesHigher <- grep("word*",names(dtHigher))
     ######################
@@ -154,10 +132,21 @@ trainContinuationProb <- function(dtLower, dtHigher, discount) {
     #See mitlm https://github.com/mitlm/mitlm/blob/master/src/KneserNeySmoothing.cpp
     #Initialize()
     dtLower[nasIndices]$contCount <- dtLower[nasIndices]$freq
+    
+    #All grams have been observed at least once
+    assert(all(dtLower$contCount>0))
    
     #Unigram, set "<s>" contCount to 0 before normalization count
     if (length(wIndicesLower) == 1)
         dtLower["<s>"]$contCount <- 0
+    
+    #Discount on effective counts
+    discount <- getDiscount(dtLower, col = "contCount")
+    cat("  --> Using discount of", discount, "\n")
+    
+    #Model pruning before marginalization count
+    cat("  --> Prune with min count value of", mincount,"\n")
+    dtLower <- dtLower[contCount>mincount]
     
     ######################
     # Normalization count:
@@ -195,11 +184,15 @@ trainContinuationProb <- function(dtLower, dtHigher, discount) {
     #Probability computation
     dtLower$logprob <- log10(pmax(dtLower$contCount-discount,0)/dtLower$totalMarginalized)
     
+    #Some normalization
+    infIndices <- which(is.infinite(dtLower$logprob))
+    dtLower[infIndices]$logprob <- -99
+    
     #Start symbol cannot have a probability
     if (is.null(ret$colNames))
         dtLower["<s>"]$logprob <- -99
     
-    return(dtLower)
+    return(list(dt=dtLower,discount=discount))
 }
 
 #-----------------------------------------------------
@@ -257,9 +250,9 @@ trainBackoffWeight <- function(dtLower, dtHigher, discount) {
 # Formula: n1/(n1+2*n2)
 # param dtHigher : the table counts to be discounted
 # return the discount estimate
-getDiscount <- function(dtHigher, col="freq") {
-    n1 <- length(which(dtHigher[,col, with=F] == 1))
-    n2 <- length(which(dtHigher[,col, with=F] == 2))
+getDiscount <- function(dtCounts, col="freq") {
+    n1 <- length(which(dtCounts[,col, with=F] == 1))
+    n2 <- length(which(dtCounts[,col, with=F] == 2))
     if (n1 == 0 && n2 == 0)
         return(1.0)
     return(n1/(n1+2*n2))
@@ -296,55 +289,36 @@ writeModel <- function(dt) {
 ###################
 # Main
 #
-#Read cleaned files
-sentences <- NULL
-for (src in SOURCES) {
-    fileName <- sprintf("%s.%s.txt", "en_US", src)
-    srcFile <- sprintf("%s/%s/%s", CLEANDIR, "en_US", fileName)
-    if (is.null(sentences)) {
-        sentences <- readSample(srcFile)
-    }
-    else
-        sentences <- bind_rows(sentences,readSample(srcFile))
-}
-
-#Save sentences
-write.table(sentences, "training.txt", quote=F, sep="\t", row.names=F,
-            col.names=F, fileEncoding = "UTF-8")
-
-#One chunk of text
-#sentences <- paste(sentences$text, collapse=" ")
-
-#Build ngram frequency table
-cat("N-gram extraction\n")
-ngramList <- text2ngram(sentences, ngramOrders = c(1,2,3,4))
-
-#Discounted value
-gram4 <- ngramList[[4]]
-gram3 <- ngramList[[3]]
-gram2 <- ngramList[[2]]
-gram1 <- ngramList[[1]]
-
-#Discounts
-D4 = getDiscount(gram4)
-D3 = getDiscount(gram3)
-D2 = getDiscount(gram2)
+#Read counts files
+gram1 <- readCounts("counts1.txt")
+gram2 <- readCounts("counts2.txt")
+gram3 <- readCounts("counts3.txt")
+gram4 <- readCounts("counts4.txt")
 
 cat("Start training\n")
-#4-grams discounted probabilities, discout is D3
-gram4 <- trainProb(gram4, D4)
+cat("4 grams training\n")
+#4-grams discounted probabilities
+ret <- trainProb(gram4, mincount = 1)
+gram4 <- ret$dt; D4 <- ret$discount
 
 #3-grams discounted probabilities
-#gram3 <- trainProb(gram3, D3)
-gram3 <- trainContinuationProb(gram3, gram4, D3)
+cat("3 grams training\n")
+#gram3 <- trainProb(gram3, mincount = 1)
+ret <- trainContinuationProb(gram3, gram4, mincount=1)
+gram3 <- ret$dt; D3 <- ret$discount
 
 #2-grams discounted countinuation probabilities
-gram2 <- trainContinuationProb(gram2, gram3, D2)
+cat("2 grams training\n")
+ret <- trainContinuationProb(gram2, gram3, mincount=2)
+gram2 <- ret$dt; D2 <- ret$discount
 
 #1-grams discounted countinuation probabilities
-#Fixed vocabulary, no discount (see log10(1/42570))
-gram1 <- trainContinuationProb(gram1, gram2, 0)
+#Fixed vocabulary, no discount (see log10(1/42570)) or pruning
+cat("1 grams training\n")
+ret <- trainContinuationProb(gram1, gram2, mincount=0)
+gram1 <- ret$dt; D1 <- ret$discount
 
+cat("Backoff weight computation\n")
 #3-grams backoff weights, discount is D4
 gram3 <- trainBackoffWeight(gram3, gram4, D4)
 
@@ -357,7 +331,7 @@ gram1 <- trainBackoffWeight(gram1, gram2, D2)
 cat("1-grams", nrow(gram1), "\n2-grams", nrow(gram2), "\n3-grams", nrow(gram3),
     "\n4-grams", nrow(gram4), "\n")
 
-cat("Discount of ", D3, D2, "\n")
+cat("Discount of ", D4, D3, D2, "\n")
 
 #Models serialization
 cat("Writing models to disk\n")
@@ -366,5 +340,5 @@ writeModel(gram2)
 writeModel(gram3)
 writeModel(gram4)
 
-rmobj(fileName)
-rmobj(srcFile)
+rmobj("fileName")
+rmobj("srcFile")
