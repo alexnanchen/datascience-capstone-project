@@ -70,24 +70,37 @@ br {
     margin: 0 auto;
 }
 
+.col-sm-4 {
+    position: absolute;
+    left:10px;
+    top:110px;
+    height:600px;
+}
+
 .col-sm-8 {
     position: absolute;
     left:600px;
-}
-
-#summary {
-     position: absolute;
-}
-
-#verbose {
-     position: absolute;
-     top: 4px;
-     left:400px;
+    top:90px;
 }
 
 #topTitle {
+     position:absolute;
+     top: 2px;
      width: 200px;
      text-align: center;
+}
+
+#summary {
+     position:absolute;
+     top:50px;
+     width:300px;
+}
+
+#verbose {
+     position:absolute;
+     top:6px;
+     width:500px;
+     left:400px;
 }
 
 #wordCloud {
