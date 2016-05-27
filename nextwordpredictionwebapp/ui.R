@@ -11,7 +11,7 @@ shinyUI(
               sidebarLayout(
                   sidebarPanel(
                     div(
-                    textInput("words", "Input text:", value = "a", width = "300px"),
+                    textInput("words", "Input text:", value = "a good", width = "300px"),
                     textOutput("prediction")),
                     br(style="margin: 10px 0;"),
                     radioButtons("options", "Options:",
@@ -21,9 +21,10 @@ shinyUI(
                     actionButton("predictButton", label="predict"),
                     br(style="margin: 20px 0;"),
                     h4("Examples sentences:"),
-                    p(span("how are you", class="sentence"),br(),
+                    p(span("how are", class="sentence"),br(),
                       span("what is the", class="sentence"), br(),
-                      span("a good", class="sentence"))
+                      span("what do you intend", class="sentence"), br(),
+                      span("what are ophthamologist (unknown word)", class="sentence"))
                      ),
                   
                   mainPanel(
@@ -38,6 +39,6 @@ shinyUI(
                   )
               )
           ),
-          tabPanel("Help"),
-          tabPanel("Algorithm")
+          tabPanel("Algorithm"),
+          tabPanel("Models")
 )))

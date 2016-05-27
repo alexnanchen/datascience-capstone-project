@@ -83,6 +83,28 @@ br {
     top:90px;
 }
 
+.ngram {
+    color:blue;
+}
+
+.backoff {
+    color:red;
+}
+
+.weight {
+    color:green;
+}
+
+.right {
+    padding-left:3em;
+}
+
+.right2 {
+    padding-left:5em;
+}
+
+
+
 #topTitle {
      position:absolute;
      top: 2px;

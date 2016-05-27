@@ -39,10 +39,10 @@ predict <- function(ngramContext, backoffWeight=0, dfResult=data.frame()) {
     #Stop condition
     if (order==1) {
         if(!is.na(backoffWeight)) {
-            debug(paste0("Search for next word with context >",ngramContext," *<\n"))
+            debug(paste0("Search for next word with context <span class='ngram'>>",ngramContext," *<</span>\n"))
             dfResult <- bind_rows(dfResult, dplyr::select(l[[order]], word, logprob) %>% 
                                       mutate(logprob=logprob+backoffWeight, order=order))
-            debug(sprintf("  =====> Added backoff weight of %f to %d results\n", backoffWeight, 
+            debug(sprintf("=====> Added backoff weight of %f to %d results\n", backoffWeight, 
                           nrow(l[[order]])))
         }
         return(dfResult)
@@ -51,14 +51,14 @@ predict <- function(ngramContext, backoffWeight=0, dfResult=data.frame()) {
     #A backoff weight is necessary to compute
     #probabilities
     if(!is.na(backoffWeight)) {
-        debug(paste0("Search for next word with context >",ngramContext," *<\n"))
+        debug(paste0("Search for next word with context <span class='ngram'>>",ngramContext," *<</span>\n"))
         setkey(l[[order]], context)
         dftmp <- tbl_df(l[[order]][.(ngram2hash(ngramContext))])
         #Update results
         if (!is.na(dftmp[1,"word"])) {
             dfResult <- bind_rows(dfResult, dplyr::select(dftmp, word, logprob) %>% 
                             mutate(logprob=logprob+backoffWeight, order=order))
-            debug(sprintf("  =====> Added backoff weight of %f to %d results\n", backoffWeight,
+            debug(sprintf("=====> Added backoff weight of %f to %d results\n", backoffWeight,
                           nrow(dftmp)))
         }
     }
@@ -86,20 +86,20 @@ getBackoffWeight <- function(dtLower, backoffContext) {
     #Greater than unigram
     if ("context" %in% names(dtLower)) {
         wordsList <- strsplit(backoffContext, split = " ")[[1]]
-        debug(sprintf("Backoff search key: '%s'", paste(wordsList, collapse=" ")))
+        debug(sprintf("<span class='right'>Backoff search key: <span class='backoff'>'%s'</span></span>", paste(wordsList, collapse=" ")))
         #Index values
         hashContext <- ngram2hash(paste(wordsList[-length(wordsList)],collapse = " "))
         strWord <- wordsList[length(wordsList)]
-        debug(sprintf(" -->'%s' '%s'\n", hashContext, strWord))
+        debug(sprintf("<span class='right2'>-->'%s' '%s'</span>\n", hashContext, strWord))
         #Backoff weight retrieval
         setkey(dtLower, context, word)
         filteredDt <- dtLower[.(hashContext, strWord)]
     } else {
-        debug(sprintf("Search key: '%s'\n", backoffContext))
+        debug(sprintf("<span class='right'>Backoff search key: <span class='backoff'>'%s'</span></span>\n", backoffContext))
         setkey(dtLower, word)
         filteredDt <- dtLower[.(backoffContext)]
     }
-    debug(sprintf(" --> found backoff weight of %f\n",filteredDt$backoffWeight))
+    debug(sprintf("<span class='right2'>--> found backoff weight of <span class='weight'>%f</span></span>\n",filteredDt$backoffWeight))
     
     #Some weight or NA
     return(filteredDt$backoffWeight)
@@ -119,10 +119,12 @@ debug <- function(strMessage) {
 #-----------------------------------------------------
 replaceUnknown <- function(wordsList) {
     for (i in seq(1, length(wordsList))) {
-        print(head(dictionary))
-        w <- wordsList[i]
+        #print(head(dictionary))
+        w <- tolower(wordsList[i])
         if (nrow(dictionary[word1==w])==0)
             wordsList[i] <- stri_enc_toutf8("<unk>")
+        else
+            wordsList[i] <- w
     }
     return(wordsList)
 }
@@ -138,9 +140,13 @@ predictNextWord <- function(strSentence, maxOrder=4) {
     startIndice <- max(length(wordsList)-maxOrder+2, 0)
     ngramContext <- paste(wordsList[startIndice:length(wordsList)], collapse=" ")
     log <<- c()
-    dfResult <- predict(ngramContext) %>% dplyr::filter(!word%in% c("<unk>"))
-    dfResult <- group_by(dfResult,word) %>% summarize(mean=mean(logprob), 
-                        maxorder=max(order)) %>% arrange(desc(maxorder), desc(mean))
+    dfResult <- predict(ngramContext) %>% dplyr::filter(!word%in% c("<unk>")) %>%
+                            mutate(prob=10^logprob)
+    dfResult <- group_by(dfResult,word) %>% summarize(confidence=mean(prob), order=as.integer(max(order)))  %>%
+                        arrange(desc(order), desc(confidence))
+    normFactor <- sum(head(dfResult,n=10)$confidence)
+    dfResult$confidence[1:10] <- sprintf("%0.2f%%", round(dfResult$confidence[1:10]/normFactor*100,2))
+    
     return(list(dfResult=head(dfResult,50), log=log))
 }
 
