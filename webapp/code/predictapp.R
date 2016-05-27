@@ -38,7 +38,7 @@ predict <- function(ngramContext, backoffWeight=0, dfResult=data.frame()) {
     #Stop condition
     if (order==1) {
         if(!is.na(backoffWeight)) {
-            debug(paste0("Search for next word with context >",ngramContext,"<\n"))
+            debug(paste0("Search for next word with context >",ngramContext," *<\n"))
             dfResult <- bind_rows(dfResult, dplyr::select(l[[order]], word, logprob) %>% 
                             mutate(logprob=logprob+backoffWeight, order=order))
             debug(sprintf("  =====> Added backoff weight of %f to %d results\n", backoffWeight, 
@@ -50,7 +50,7 @@ predict <- function(ngramContext, backoffWeight=0, dfResult=data.frame()) {
     #A backoff weight is necessary to compute
     #probabilities
     if(!is.na(backoffWeight)) {
-        debug(paste0("Search for next word with context >",ngramContext,"<\n"))
+        debug(paste0("Search for next word with context >",ngramContext," *<\n"))
         setkey(l[[order]], context)
         dftmp <- tbl_df(l[[order]][.(ngram2hash(ngramContext))])
         #Update results
@@ -121,7 +121,7 @@ debug <- function(strMessage) {
 #
 predictNextWord <- function(strSentence, maxOrder=4) {
     log <<- c()
-    dfResult <- predict(strSentence)
+    dfResult <- predict(strSentence) %>% dplyr::filter(!word%in% c("<unk>"))
     dfResult <- group_by(dfResult,word) %>% summarize(mean=mean(logprob), 
                         maxorder=max(order)) %>% arrange(desc(maxorder), desc(mean))
     return(list(dfResult=head(dfResult,50), log=log))
