@@ -23,6 +23,7 @@ shinyUI(
                     h4("Examples sentences:"),
                     p(span("how are", class="sentence"),br(),
                       span("what is the", class="sentence"), br(),
+                      span("the rest of", class="sentence"), br(),
                       span("what do you intend", class="sentence"), br(),
                       span("what are ophthamologist (unknown word)", class="sentence"))
                      ),
@@ -39,7 +40,31 @@ shinyUI(
                   )
               )
           ),
-          tabPanel("Help"),
+          tabPanel("Help",
+                   mainPanel(
+                        div(id="trace", class="well-trace",
+                           HTML("<p>The trace of the backing off algorithm can be a little challenging to understand.
+                                 Here is a detail explanation of the next word prediction for:</p>
+                                 <p class='keywords'><b>\"the rest of\"</b></p>
+                                 <img src='algorithm.jpg'>
+                                 <p class='pbm'>
+                                    <ol>
+                                    <li>A 4-gram search is performed (the star denote any distinct word)</li>
+                                    <li>21 results are found, no backoff is added (numbers are in log10 domain)</li>
+                                    <li>\"the rest\" words are hashed (a trick to reduce memory footprint). The word \"of\" is appended</li>
+                                    <li>A backoff weight of -1.45 has been found. This correspond to the relative (to higher order) free mass to share</li>
+                                    <li>A 3-gram search is performed and yield two results. The score of the results are adjusted with the backoff weight</li>
+                                    <li>The algorithm search for a backoff value for \"rest of\" in bigram model, without success</li>
+                                    <li>The algorithm search for a backoff value for \"of\" in the unigram model, with success</li>
+                                    <li>All unigram words are potential results. They are adjusted with the found backoff weight</li>
+                                    </ol>
+                                 </p>
+                                 <p style='margin-top:2em'>
+                                  Finally, for each found word, all scores for all orders (here 1-gram, 3-gram and 4-gram) are
+                                  averaged without forgetting to move to the probability domain before averaging.
+                                 </p>")
+                          )       
+                   )),
           tabPanel("Algorithm",
                    mainPanel(
                        div(id="models", class="well",
@@ -53,7 +78,7 @@ shinyUI(
                                           <li>4-gram: 183427 entries</li>
                                       </ul>
                                  <p class='doc'>In order to save memory, part of the text composing the n-gram is converted into
-                                    a signed integer. This allows for a gain of memory of a factor of 2.6.
+                                    a signed integer. This allows for a reduction of memory footpring of a factor of 2.8.
                                  </p>"),
                            HTML("<h2>Algorithm</h2>
                                  <p>The following steps are performed in order to select the best words matches:
