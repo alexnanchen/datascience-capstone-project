@@ -46,7 +46,7 @@ shinyUI(
                            HTML("<p>The trace of the backing off algorithm can be a little challenging to understand.
                                  Here is a detail explanation of the next word prediction for:</p>
                                  <p class='keywords'><b>\"the rest of\"</b></p>
-                                 <img src='algorithm.jpg'>
+                                 <p class='center'><img src='algorithm.jpg'></p>
                                  <p class='pbm'>
                                     <ol>
                                     <li>A 4-gram search is performed (the star denote any distinct word)</li>
