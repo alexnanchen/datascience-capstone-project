@@ -36,69 +36,64 @@ readSample <- function(fileName) {
 ```
 
 # Synopsis
+Around the world, people are spending an increasing amount of time on their mobile devices for email,
+social networking, banking and a whole range of other activities. But typing on mobile devices can be
+a serious pain. 
 
+The goal of the project is to build a predictive algorithm that help users by suggesting words as they are
+typing.
 
 # Data selection
-First the data is downloaded from the course web site and unziped.
-The current document will be focused on the **en_US** texts.
+The data is made available from the course web site. Here is a summary of the downloaded english US
+text.
 
-Some of the scripts are too long to be show. You can find them on my 
-[Capstone git repository](https://github.com/alexnanchen/datascience-capstone-project.git)
+### Data statistics
+```{r, echo=F}
+tw <- strsplit(system("wc ../data/en_US/en_US.twitter.txt", intern = T), " +")
+bl <- strsplit(system("wc ../data/en_US/en_US.blogs.txt", intern = T)," +")
+nw <- strsplit(system("wc ../data/en_US/en_US.news.txt", intern = T)," +")
+totalLines <- as.integer(tw[[1]][2]) + as.integer(bl[[1]][2]) + as.integer(nw[[1]][2])
+totalWords <- as.integer(tw[[1]][3]) + as.integer(bl[[1]][3]) + as.integer(nw[[1]][3])
+```
 
-### Dataset statistics
 ```{r, echo=F}
 df <- data.frame(DataSet=c("Twitter", "News", "Blogs"), 
-                 Number.lines=c(2360148,1010242,899288), Number.words=c(30374206,34372720,37334690))
+                 Number.lines=c(as.integer(tw[[1]][2]),as.integer(bl[[1]][2]), as.integer(nw[[1]][2])),
+                 Number.words=c(as.integer(tw[[1]][3]),as.integer(bl[[1]][3]),as.integer(nw[[1]][3])))
 kable(df,row.names = F, format.args=list(big.mark = "'"))
 ```
 
-In total, **`r format(4269678,big.mark="'")`** lines **`r format(102081616,big.mark="'")`** words.
+In total, **`r format(totalLines,big.mark="'")`** lines **`r format(totalWords,big.mark="'")`** words.
 
 ### Data sampling
 The purpose of the data sampling is to select a representative subset of the 100 Mio words trying to avoid a potential
-bias.
+bias. This step is necessary because the final models will be running on a webserver with limited memory and disk
+space resources.
 
 A divide and conquer method associated with random sampling has been chosen:
 
 1. Load all sentences having more than 3 words and less than 50 words.
-1. Choose the total amount of lines for the subset, in our case 1.5 Mio (500'000 per source)
-2. Subsample sentences from the available sources: twitter, blogs and news using the following algorithm:
+2. Choose the total amount of lines for the subset, in our case 1.5 Mio (500'000 per source)
+3. Subsample sentences from the available sources: twitter, blogs and news using the following algorithm:
     - For the given data source, compute sentence words length density
     - Use this density to randomly select the appropriate amount of sentences for each class
-
-The script use to do the sampling is called *datasampling.R*.
 
 In total, **`r format(1499935,big.mark="'")`** lines **`r format(31213036,big.mark="'")`** words.
 
 # Data preparation
-The data preparation has been performed with the *datapreparation.R* script.
+Before modeling the language, some data transformations have been applied to the sampled data.
 
-The following transformations have been applied to the data sample:
-
-#### Special characters replacements
-Emoticons, control characters, special utf-8 characters
-```
-#Emoticons replacement
-strText <- mapUtf8Characters(strText, EMOTICONSMAP)
-
-#Control characters replacement
-strText <- mapUtf8Characters(strText, CONTROLMAP)
-
-#Utf-8 characters replacement
-strText <- mapUtf8Characters(strText, UTF8MAP)
-```
-
-#### Text normalization
-Lowercasing, numbers removal,punctuation removal, white space normalization, offensive words removal
-```
-c <- VCorpus(VectorSource(strText))
-c <- tm_map(c, tolower)
-c <- tm_map(c, removeNumbers)
-c <- tm_map(c, removePunctuation)
-c <- tm_map(c, stripWhitespace)
-c <- tm_map(c, PlainTextDocument)
-c <- tm_map(c, removeWords, offensiveWords)
-```
+##### Special characters replacements:
+   - Emoticons
+   - Control characters
+   - Special utf-8 characters
+   
+##### Text normalization:
+   - Lowercasing
+   - Numbers removal
+   - Punctuation removal
+   - White space normalization,
+   - Offensive words removal
 
 # Exploratory data analysis
 ```{r, echo=F}
