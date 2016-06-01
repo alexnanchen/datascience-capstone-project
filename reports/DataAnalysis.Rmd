@@ -1,7 +1,7 @@
 ---
 title: "Exploratory data analysis"
 author: "Alexandre Nanchen"
-date: "05 June 2016"
+date: "01 June 2016"
 output:
   html_document:
     fig_caption: yes
@@ -63,7 +63,7 @@ df <- data.frame(DataSet=c("Twitter", "News", "Blogs"),
 kable(df,row.names = F, format.args=list(big.mark = "'"))
 ```
 
-In total, **`r format(totalLines,big.mark="'")`** lines **`r format(totalWords,big.mark="'")`** words.
+In total, **`r format(totalLines,big.mark="'")`** sentences and **`r format(totalWords,big.mark="'")`** words.
 
 ### Data selection
 The purpose of the data selection is to choose a representative subset from the 100 Mio words. This step is necessary
@@ -163,12 +163,12 @@ Now lets check the N-gram coverage of the sampled text.
 
 ```{r, echo=F, message=F, warning=F, fig.height=3, fig.width=9}
 df <- data.frame(gram=c(1,2,3), count=c(nbUnigrams,nbBigrams,nbTrigrams), 
-                 log10.coverage=c(as.integer(0), log10(nbBigrams/nbUnigrams^2), log10(nbTrigrams/nbUnigrams^3)))
+                 log10=c(as.integer(0), log10(nbBigrams/nbUnigrams^2), log10(nbTrigrams/nbUnigrams^3)))
 
 p1 <- ggplot(df, aes(gram,count, fill=count)) + geom_bar(stat = "identity") + 
        theme_bw() + ggtitle("N-gram counts") + xlab("N-gram")
-p2 <- ggplot(df, aes(gram,log10.coverage, fill=log10.coverage)) + geom_bar(stat = "identity") + 
-           theme_bw() + ggtitle("N-gram coverage in log10") + xlab("N-gram")
+p2 <- ggplot(df, aes(gram,log10, fill=log10)) + geom_bar(stat = "identity") + 
+           theme_bw() + ggtitle("N-gram coverage (log scale)") + xlab("N-gram")
 
 grid.arrange(p1,p2,ncol=2)
 ```
@@ -177,7 +177,7 @@ The left plot display the observed counts per N-gram order (1,2,3-grams). The ri
 the observed N-grams.
 
 For the unigram, as we don't know all possible words for the english language, there is no coverage.
-However, for bigrams and trigrams we see a coverage lower than 0.0001% and 0.000001% respectively.
+However, for bigrams and trigrams we see a coverage lower than 0.001% and 0.00000001% respectively.
 
 This underline the fact that relying only on 3 grams will not work. We will have to use lower order N-grams as well
 has higher order N-grams to do our word prediction.
@@ -197,7 +197,7 @@ dfFreq$percent <- cumsum(dfFreq$Freq)/sum(dfFreq$Freq)
 ggplot(dfFreq, aes(Freq, percent)) + geom_point() + theme_bw() + xlim(0,50) + ggtitle("Influence of a count class removal") + xlab("Count classes")
 ```
 
-On the plot we can see that the removal of words appearing only once will keep the word coverage at around 90%.
+On the plot we can see that the removal of words appearing only once will keep the word coverage above 90%.
 
 ### Conclusion and futur plans
 The first important conclusion is that bigram and trigram coverages are very low. It is indeed very difficult to observe all
