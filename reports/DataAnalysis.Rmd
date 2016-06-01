@@ -161,7 +161,7 @@ this number with the observed bigrams. Suppose we observe 5 unique bigrams, then
 
 Now lets check the N-gram coverage of the sampled text.
 
-```{r, echo=F, message=F, warning=F, fig.height=3, fig.width=9}
+```{r, echo=F, message=F, warning=F, fig.height=4, fig.width=9}
 df <- data.frame(gram=c(1,2,3), count=c(nbUnigrams,nbBigrams,nbTrigrams), 
                  log10=c(as.integer(0), log10(nbBigrams/nbUnigrams^2), log10(nbTrigrams/nbUnigrams^3)))
 
@@ -179,7 +179,7 @@ the observed N-grams.
 For the unigram, as we don't know all possible words for the english language, there is no coverage.
 However, for bigrams and trigrams we see a coverage lower than 0.001% and 0.00000001% respectively.
 
-This underline the fact that relying only on 3 grams will not work. We will have to use lower order N-grams as well
+This underline the fact that relying only on higher order N-grams will not work. We will have to use lower order N-grams as well
 has higher order N-grams to do our word prediction.
 
 ### Word selection

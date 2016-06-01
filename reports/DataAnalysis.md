@@ -96,7 +96,7 @@ the observed N-grams.
 For the unigram, as we don't know all possible words for the english language, there is no coverage.
 However, for bigrams and trigrams we see a coverage lower than 0.001% and 0.00000001% respectively.
 
-This underline the fact that relying only on 3 grams will not work. We will have to use lower order N-grams as well
+This underline the fact that relying only on higher order N-grams will not work. We will have to use lower order N-grams as well
 has higher order N-grams to do our word prediction.
 
 ### Word selection
