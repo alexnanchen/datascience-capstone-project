@@ -1,7 +1,7 @@
 ---
 title: "Exploratory data analysis"
 author: "Alexandre Nanchen"
-date: "23 April 2016"
+date: "05 June 2016"
 output:
   html_document:
     fig_caption: yes
@@ -43,7 +43,7 @@ a serious pain.
 The goal of the project is to build a predictive algorithm that help users by suggesting words as they are
 typing.
 
-# Data selection
+# Data description
 The data is made available from the course web site. Here is a summary of the downloaded english US
 text.
 
@@ -65,20 +65,26 @@ kable(df,row.names = F, format.args=list(big.mark = "'"))
 
 In total, **`r format(totalLines,big.mark="'")`** lines **`r format(totalWords,big.mark="'")`** words.
 
-### Data sampling
-The purpose of the data sampling is to select a representative subset of the 100 Mio words trying to avoid a potential
-bias. This step is necessary because the final models will be running on a webserver with limited memory and disk
-space resources.
+### Data selection
+The purpose of the data selection is to choose a representative subset from the 100 Mio words. This step is necessary
+because the final models will be running on a Web Server with limited memory and disk space.
 
 A divide and conquer method associated with random sampling has been chosen:
 
-1. Load all sentences having more than 3 words and less than 50 words.
-2. Choose the total amount of lines for the subset, in our case 1.5 Mio (500'000 per source)
-3. Subsample sentences from the available sources: twitter, blogs and news using the following algorithm:
-    - For the given data source, compute sentence words length density
-    - Use this density to randomly select the appropriate amount of sentences for each class
+1. Select all sentences having more than 3 words and less than 50 words
+2. Choose the amount of sentences per source (twitter, blogs and news) you want to keep
+3. Sample randomly the chosen amount of sentences from the three sources making sure that
+   there is an equal proportion of sentences per sentence words length
 
-In total, **`r format(1499935,big.mark="'")`** lines **`r format(31213036,big.mark="'")`** words.
+```{r, echo=F}
+tw <- strsplit(system("wc ../sample/en_US/en_US.twitter.txt", intern = T), " +")
+bl <- strsplit(system("wc ../sample/en_US/en_US.blogs.txt", intern = T)," +")
+nw <- strsplit(system("wc ../sample/en_US/en_US.news.txt", intern = T)," +")
+totalLines <- as.integer(tw[[1]][2]) + as.integer(bl[[1]][2]) + as.integer(nw[[1]][2])
+totalWords <- as.integer(tw[[1]][3]) + as.integer(bl[[1]][3]) + as.integer(nw[[1]][3])
+```
+
+In total, **`r format(totalLines,big.mark="'")`** lines **`r format(totalWords,big.mark="'")`** words.
 
 # Data preparation
 Before modeling the language, some data transformations have been applied to the sampled data.
@@ -97,16 +103,12 @@ Before modeling the language, some data transformations have been applied to the
 
 # Exploratory data analysis
 ```{r, echo=F}
-CLEANDIR <- "../clean/en_US"
-sentences <- c()
-for (src in c("twitter","news","blogs")) {
-    fileName <- sprintf("%s.%s.txt", "en_US", src)
-    srcFile <- sprintf("%s/%s", CLEANDIR, fileName)
-    df <- tbl_df(read.table(srcFile,allowEscapes = T, stringsAsFactors = F)) %>% rename(text=V1)
-    sentences <- c(sentences, df$text)
-}
+dft <- tbl_df(read.table("../clean/en_US/en_US.twitter.txt",allowEscapes = T, stringsAsFactors = F)) %>% rename(text=V1)
+dfb <- tbl_df(read.table("../clean/en_US/en_US.blogs.txt",allowEscapes = T, stringsAsFactors = F)) %>% rename(text=V1)
+dfn <- tbl_df(read.table("../clean/en_US/en_US.news.txt",allowEscapes = T, stringsAsFactors = F)) %>% rename(text=V1)
+sentences <- c(dft$text, dfb$text, dfn$text)
 ```
-The exploratory data analysis will be performed on **`r format(length(sentences),big.mark="'")`** sentences.
+The exploratory data analysis will be performed on the sampled data containing **`r format(length(sentences),big.mark="'")`** sentences.
 
 ### N gram frequencies
 #### Unigrams
@@ -117,7 +119,7 @@ nbUnigrams <- length(table(unigrams))
 ```
 In total, there are **`r format(nbUnigrams, big.mark="'")`** unique words.
 
-Here is a word cloud of words occurring more than 50 times.
+Here is a words cloud of words occurring more than 50 times.
 ```{r, echo=F, fig.height=4}
 c <- Corpus(VectorSource(paste(sentences,collapse=" ")))
 td <- DocumentTermMatrix(c)
@@ -125,7 +127,8 @@ wordcloud(c,scale=c(6,1), rot.per=0.35, min.freq=50, use.r.layout=F,
           colors= brewer.pal(8,"Spectral"), max.words = 100)
 ```
 
-#### Bigrams and trigrams
+#### Bigrams and trigram counts
+Here are some plots of bigram and trigram counts.
 ```{r, echo=F}
 bigramTokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 2, max = 2))
 bigrams <- unlist(lapply(sentences, bigramTokenizer))
@@ -134,7 +137,6 @@ trigramTokenizer <- function(x) NGramTokenizer(x, Weka_control(min = 3, max = 3)
 trigrams <- unlist(lapply(sentences, trigramTokenizer))
 nbTrigrams <- length(table(trigrams))
 ```
-Here are some frequencies plot:
 ```{r, echo=F, fig.height=3, fig.width=9}
 dfBigramFreq <- tbl_df(data.frame(table(bigrams))) %>% arrange(Freq) %>%
                 mutate(bigrams = factor(bigrams,levels=as.character(bigrams)))
@@ -148,43 +150,63 @@ gtrigram <- ggplot(tail(dfTrigramFreq,10),aes(x=trigrams,y=Freq, fill=Freq)) +
 grid.arrange(gbigram,gtrigram,ncol=2)
 ```
 
-### N-gram coverage
-It can be interesting to relate the increase of unique ngrams and their decrease of coverage.
+It is apparent that when changing N-gram order, i.e. from bigram to trigram, the number of observed counts decrease substantively.
 
-By coverage we mean the percentage of observed ngram versus all possible ngrams. For example
-if there are 5 unigrams, the maximum number of bigram is 25 and if we have observered 5 unique bigrams, the bigram coverage is 5 for 25 or 20%.
+### N-gram coverage
+By coverage we mean the percentage of observed N-grams (from the text sentences) versus all possible N-grams for a
+given N-gram order (2-grams, 3-grams, ...).
+
+For example if the selected vocabulary is 5 unique words, the maximum number of bigram is 5*5 = 25. Then we can compare
+this number with the observed bigrams. Suppose we observe 5 unique bigrams, then the bigram coverage is 5 for 25 or 20%.
+
+Now lets check the N-gram coverage of the sampled text.
 
 ```{r, echo=F, message=F, warning=F, fig.height=3, fig.width=9}
 df <- data.frame(gram=c(1,2,3), count=c(nbUnigrams,nbBigrams,nbTrigrams), 
                  log10.coverage=c(as.integer(0), log10(nbBigrams/nbUnigrams^2), log10(nbTrigrams/nbUnigrams^3)))
 
 p1 <- ggplot(df, aes(gram,count, fill=count)) + geom_bar(stat = "identity") + 
-       theme_bw() + ggtitle("N-gram counts") + xlab("n-gram")
+       theme_bw() + ggtitle("N-gram counts") + xlab("N-gram")
 p2 <- ggplot(df, aes(gram,log10.coverage, fill=log10.coverage)) + geom_bar(stat = "identity") + 
-           theme_bw() + ggtitle("N-gram coverage in log10") + xlab("n-gram")
+           theme_bw() + ggtitle("N-gram coverage in log10") + xlab("N-gram")
 
 grid.arrange(p1,p2,ncol=2)
 ```
 
-We can se that as the number of unique ngram increase in linear fashion, the coverage decrease in an exponential manner.
+The left plot display the observed counts per N-gram order (1,2,3-grams). The right plot shows the coverage of
+the observed N-grams.
+
+For the unigram, as we don't know all possible words for the english language, there is no coverage.
+However, for bigrams and trigrams we see a coverage lower than 0.0001% and 0.000001% respectively.
+
+This underline the fact that relying only on 3 grams will not work. We will have to use lower order N-grams as well
+has higher order N-grams to do our word prediction.
 
 ### Word selection
-We have seen that the number of unigram is very important when moving to higher orders like bigram and trigrams.
+We have seen that the number of unigrams play an important role in the N-gram coverage. The more vocabulary, the
+less N-gram coverage there will be.
 
-Basically we would like to reduce the number of unigrams while keeping the maximum information.
-One way to check that is to order unigram by decreasing frequencies, find a cut-off point, take all unigram above that point, sum their total of occurence and compare that to the total word occurences.
+Ideally we would like to reduce the number of unigrams while keeping the maximum information contained in the observed text sentences.
+
+One way to check how many vocabulary words are necessary is to plot classes of N-gram counts (N-grams with count 1,2,...,50,...) 
+versus their contribution towards the total word occurrences.
 
 ```{r, echo=F, warning=F}
 dfFreq <- tbl_df(data.frame(table(unigrams))) %>% arrange(desc(Freq))
-dfFreq$coverage <- cumsum(dfFreq$Freq)/sum(dfFreq$Freq)
-ggplot(dfFreq, aes(Freq, coverage)) + geom_point() + theme_bw() + xlim(0,50) + ggtitle("Influence of a count class removal") + xlab("Count classes")
+dfFreq$percent <- cumsum(dfFreq$Freq)/sum(dfFreq$Freq)
+ggplot(dfFreq, aes(Freq, percent)) + geom_point() + theme_bw() + xlim(0,50) + ggtitle("Influence of a count class removal") + xlab("Count classes")
 ```
 
-On the plot we can see that the removal of words appearing only once will keep the words coverage around 90%.
+On the plot we can see that the removal of words appearing only once will keep the word coverage at around 90%.
 
-### Conclusion
-The first important conclusion is that bigram and trigram coverage are very low. It is indeed very difficult to observe all unigram combinations and we need a lot of text. So a strategy to combine multiple model of different orders need to be used. For exampling backing of to lower order models.
+### Conclusion and futur plans
+The first important conclusion is that bigram and trigram coverages are very low. It is indeed very difficult to observe all
+bigrams and trigrams combinations: we need a lot of text. So a strategy is to combine multiple models of different orders.
+For exampling backing of to lower order models.
 
-The second observation is that we can eliminate some keywords appearing rarely while keeping a coverage around 90%. Reducing the number of keywords will help to have a model of resonable size with a good predictive quality.
+The second observation is that we can eliminate some keywords appearing rarely while keeping most of the information
+contained in the observed text. Reducing the number of keywords will help to have a model of reasonable size with a
+good predictive quality.
 
-
+Hence, the next steps are to select a list of vocabulary words and build a back-off model for 3,2,1 grams projected
+on the selected vocabulary.
