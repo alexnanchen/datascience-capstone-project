@@ -5,32 +5,11 @@ library(tm)
 # Environment
 #
 source("code/config.R")
+source("code/mod.R")
 
 ###################
 # Implementation
 #
-#---------------------------------------------------
-# Read sentences from a text file 
-#---------------------------------------------------
-# param fileName  : the source text file
-#       minLength : min words per sentence
-#       maxLength : max words per sentence
-#
-# return a data frame of sentences and words count
-#
-readSentences <- function(fileName, minLength, maxLength) {
-    #Read whole file
-    cmd <- sprintf("awk '{if (NF>=%d && NF <=%d) print $0}' < %s", minLength, maxLength, fileName)
-    cat("Reading file with following command ", cmd)
-    con <- pipe(cmd,encoding = "UTF-8")
-    df <- tbl_df(data.frame(text =readLines(con), stringsAsFactors = F))
-    close(con)
-    
-    #Nb words stat
-    df$nbwords <- apply(df,1,function(r){length(strsplit(r," +")[[1]])})
-    return(df)
-}
-
 #---------------------------------------------------
 # Sample sentences base of words length frequencies
 #---------------------------------------------------
@@ -67,7 +46,7 @@ MAXSENTPERSRC = 100000
 for (lang in LANGUAGES) {
     for (src in SOURCES) {
         #Input and output names
-        fileName <- sprintf("%s.%s.txt", lang, src)
+        fileName <- sprintf("%s_%s_train.txt", lang, src)
         srcFile <- sprintf("%s/%s/%s", DATADIR, lang, fileName)
         destFile <- sprintf("%s/%s/%s", SAMPLEDIR, lang, fileName)
         
