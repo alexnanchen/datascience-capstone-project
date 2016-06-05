@@ -20,5 +20,7 @@ The file structure is has following:
 Here  are the steps to train the models
 
 1.  source("datascience-capstone-project/setenv.R")
-2.  
+2.  source("datasplit.R") - Split the data into trainin, development and testing sets
+3.  source("datasampling.R") - Sample from training set 300'000 sentences, 100'000 per source
+4.  source("datapreparation.R") - Clean and prepare all data sets
 
