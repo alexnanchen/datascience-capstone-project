@@ -62,47 +62,21 @@ predict <- function(ngramContext, backoffWeight=0, dfResult=data.frame()) {
 }
 
 #-----------------------------------------------------
-# Retrieve the backoff weight of a context
+# Predict next word from a sentence input
 #-----------------------------------------------------
-# param dtLower        : a data table containin bow
-#       backoffContext : a word string
-# return a weight or NULL
+# param strSentence : a sequence of words
+# return an ordered data frame
 #
-getBackoffWeight <- function(dtLower, backoffContext) {
-    backoffWeight <- NULL
-    #Greater than unigram
-    if ("context" %in% names(dtLower)) {
-        wordsList <- strsplit(backoffContext, split = " ")[[1]]
-        if(DEBUG) cat("Backoff search key:", wordsList)
-        #Index values
-        hashContext <- ngram2hash(paste(wordsList[-length(wordsList)],collapse = " "))
-        strWord <- wordsList[length(wordsList)]
-        if(DEBUG) cat(" -->", hashContext, strWord)
-        #Backoff weight retrieval
-        setkey(dtLower, context, word)
-        filteredDt <- dtLower[.(hashContext, strWord)]
-    } else {
-        if(DEBUG) cat("Search key:", backoffContext)
-        setkey(dtLower, word)
-        filteredDt <- dtLower[.(backoffContext)]
-    }
-    cat(" --> found backoff weight of",filteredDt$backoffWeight, "\n")
+predictNextWord <- function(strSentence, dictionary, maxOrder=4) {
+    wordsList <- replaceUnknown(strsplit(strSentence, " ")[[1]], dictionary)
+    startIndice <- max(length(wordsList)-maxOrder+2, 0)
+    ngramContext <- paste(wordsList[startIndice:length(wordsList)], collapse=" ")
+    dfResult <- predict(ngramContext) %>% dplyr::filter(!word%in% c("<unk>")) %>%
+        mutate(prob=10^logprob)
+    dfResult <- group_by(dfResult,word) %>% summarize(confidence=mean(prob), order=as.integer(max(order)))  %>%
+        arrange(desc(order), desc(confidence))
+    normFactor <- sum(head(dfResult,n=10)$confidence)
+    dfResult$confidence[1:10] <- sprintf("%0.2f%%", round(dfResult$confidence[1:10]/normFactor*100,2))
     
-    #Some weight or NA
-    return(filteredDt$backoffWeight)
-}
-
-#-----------------------------------------------------
-# Replace unknown words by <unk>
-#-----------------------------------------------------
-replaceUnknown <- function(wordsList) {
-    for (i in seq(1, length(wordsList))) {
-        #print(head(dictionary))
-        w <- tolower(wordsList[i])
-        if (nrow(dictionary[word1==w])==0)
-            wordsList[i] <- stri_enc_toutf8("<unk>")
-        else
-            wordsList[i] <- w
-    }
-    return(wordsList)
+    return(head(dfResult,50))
 }

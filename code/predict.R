@@ -11,29 +11,6 @@ source("code/mod.R")
 source("code/prediction.R")
 
 ###################
-# Implementation
-#
-#-----------------------------------------------------
-# Predict next word from a sentence input
-#-----------------------------------------------------
-# param strSentence : a sequence of words
-# return an ordered data frame
-#
-predictNextWord <- function(strSentence, maxOrder=4) {
-    wordsList <- replaceUnknown(strsplit(strSentence, " ")[[1]])
-    startIndice <- max(length(wordsList)-maxOrder+2, 0)
-    ngramContext <- paste(wordsList[startIndice:length(wordsList)], collapse=" ")
-    dfResult <- predict(ngramContext) %>% dplyr::filter(!word%in% c("<unk>")) %>%
-        mutate(prob=10^logprob)
-    dfResult <- group_by(dfResult,word) %>% summarize(confidence=mean(prob), order=as.integer(max(order)))  %>%
-        arrange(desc(order), desc(confidence))
-    normFactor <- sum(head(dfResult,n=10)$confidence)
-    dfResult$confidence[1:10] <- sprintf("%0.2f%%", round(dfResult$confidence[1:10]/normFactor*100,2))
-    
-    return(head(dfResult,50))
-}
-
-###################
 # Main
 #
 dt1 <- readModel("gram1.txt",1)
@@ -52,5 +29,5 @@ saveModel(dt4, "gram4c.txt")
 dictionary <- fread(paste0("vocabulary.txt"), sep="\t", header=T, 
                     stringsAsFactors = F, encoding = "UTF-8")
 
-dfResult <- predictNextWord("what do you")
+dfResult <- predictNextWord("what do you", dictionary)
 print(dfResult)

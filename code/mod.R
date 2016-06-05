@@ -154,3 +154,52 @@ readBuffer <- function(fileName, skip, df, nbWords) {
     
     return(df)
 }
+
+###################
+# Prediction
+#
+#-----------------------------------------------------
+# Replace unknown words by <unk>
+#-----------------------------------------------------
+replaceUnknown <- function(wordsList, dictionary) {
+    for (i in seq(1, length(wordsList))) {
+        #print(head(dictionary))
+        w <- tolower(wordsList[i])
+        if (nrow(dictionary[word1==w])==0)
+            wordsList[i] <- stri_enc_toutf8("<unk>")
+        else
+            wordsList[i] <- w
+    }
+    return(wordsList)
+}
+
+#-----------------------------------------------------
+# Retrieve the backoff weight of a context
+#-----------------------------------------------------
+# param dtLower        : a data table containin bow
+#       backoffContext : a word string
+# return a weight or NULL
+#
+getBackoffWeight <- function(dtLower, backoffContext) {
+    backoffWeight <- NULL
+    #Greater than unigram
+    if ("context" %in% names(dtLower)) {
+        wordsList <- strsplit(backoffContext, split = " ")[[1]]
+        if(DEBUG) cat("Backoff search key:", wordsList)
+        #Index values
+        hashContext <- ngram2hash(paste(wordsList[-length(wordsList)],collapse = " "))
+        strWord <- wordsList[length(wordsList)]
+        if(DEBUG) cat(" -->", hashContext, strWord)
+        #Backoff weight retrieval
+        setkey(dtLower, context, word)
+        filteredDt <- dtLower[.(hashContext, strWord)]
+    } else {
+        if(DEBUG) cat("Search key:", backoffContext)
+        setkey(dtLower, word)
+        filteredDt <- dtLower[.(backoffContext)]
+    }
+    cat(" --> found backoff weight of",filteredDt$backoffWeight, "\n")
+    
+    #Some weight or NA
+    return(filteredDt$backoffWeight)
+}
