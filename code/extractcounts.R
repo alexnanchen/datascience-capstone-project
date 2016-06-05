@@ -23,7 +23,7 @@ readSample <- function(fileName) {
     cat("Reading ", fileName,"\n")
     df <- tbl_df(read.table(fileName,allowEscapes = T, sep="|", stringsAsFactors = F)) %>%
         rename(text=V1)
-    df$text <- sapply(df$text, function(s) sprintf("%s",s))
+    df$text <- sapply(df$text, function(s) sprintf("<s> %s </s>",s))
     Encoding(df$text) <- "UTF-8"
     return(df)
 }
@@ -168,7 +168,7 @@ rmobj("gram1"); runGC()
 
 cat("Re-extract ngrams on text with <unk> words\n")
 #No token filtering here. One and two counts are needed for discount computation
-ngramList <- text2ngram(sentences, ngramOrders = c(1,2,3,4), minCounts = c(0,0,0,0))
+ngramList <- text2ngram(sentences, ngramOrders = c(1,2,3,4), minCounts = c(3,2,1,1))
 gram1 <- ngramList[[1]]
 gram2 <- ngramList[[2]]
 gram3 <- ngramList[[3]]
