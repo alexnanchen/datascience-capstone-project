@@ -19,8 +19,16 @@ The file structure is has following:
 ### Training
 Here  are the steps to train the models
 
-1.  source("datascience-capstone-project/setenv.R")
-2.  source("datasplit.R") - Split the data into trainin, development and testing sets
-3.  source("datasampling.R") - Sample from training set 300'000 sentences, 100'000 per source
-4.  source("datapreparation.R") - Clean and prepare all data sets
+1. source("datascience-capstone-project/setenv.R")
+2. source("datasplit.R") - Split the data into trainin, development and testing sets
+3. source("datasampling.R") - Sample from training set 300'000 sentences, 100'000 per source
+4. source("datapreparation.R") - Clean and prepare all data sets
+5. source("extractcounts.R")
+    - Vocabulary extraction. Interactive process where the user has to check the vocabulary list
+    - 1 to 4 grams extraction
+    - \<unk\> token for words that are not in the vocabulary list
+6. source("training.R")
+7. source("predict.R")
+    - Compression of trained models
+    - Prediction of next word for "what do you"
 
