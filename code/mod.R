@@ -69,7 +69,7 @@ readSentences <- function(fileName, minLength, maxLength) {
 # param fileName  : the n-gram text file
 # return a data table
 #
-readModel <- function(fileName, nbWords) {
+readModel <- function(fileName, order, evaluate=F) {
     cat("Reading ", fileName,"\n")
     
     #File size in lines
@@ -83,7 +83,12 @@ readModel <- function(fileName, nbWords) {
     #Read all buffers
     dt <- NULL; skip <- 0
     for (i in seq(1,nbBuffers)) {
-        dt <- readBuffer(fileName, skip, dt, nbWords)
+        dt <- NULL
+        if(!evaluate) 
+            dt <- readBuffer(fileName, skip, dt, order)
+        else
+            dt <- readBufferEvaluate(fileName, skip, dt)
+            
         skip <- skip + READBUFFER
     } 
     
@@ -145,6 +150,31 @@ readBuffer <- function(fileName, skip, df, nbWords) {
         
     } else
         dfBuffer <- dplyr::rename_(dfBuffer,word="V1",logprob="V2", backoffWeight="V3")
+    
+    #Append buffer
+    if (is.null(df))
+        df <- dfBuffer
+    else 
+        df <- rbindlist(list(df, dfBuffer))
+    
+    return(df)
+}
+
+#-----------------------------------------------------
+# Read a buffer of n-grams
+#-----------------------------------------------------
+# param fileName  : the n-gram text file
+#       skip      : number of rows to skip
+#       df        : where to append the rows buffer
+# return a data frame
+#
+readBufferEvaluate <- function(fileName, skip, df) {
+    #Read in memory buffer
+    dfBuffer <- tbl_df(read.table(fileName, allowEscapes = T, sep="|", 
+                                  stringsAsFactors = F, nrow=READBUFFER, skip=skip))
+    
+    #Compress values to save memory space
+    dfBuffer <- data.table(compressBuffer(dfBuffer))
     
     #Append buffer
     if (is.null(df))

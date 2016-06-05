@@ -199,7 +199,6 @@ getNgramLog <- function(wordsList, indice, model, maxorder) {
 #       maxorder    : the highest model order
 # return the joint log probability with oov count
 getSentenceLog <- function(strSentence, model, maxorder) {
-    strSentence <- paste("<s>",strSentence,"</s>")
     if(DEBUG) cat("==> Scoring", strSentence, "\n")
     
     wordsList <- strsplit(strSentence," ")[[1]]
