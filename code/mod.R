@@ -165,14 +165,24 @@ readBufferEvaluate <- function(fileName, skip, df) {
 }
 
 #-----------------------------------------------------
-# Save a compress model to disk
+# Compress data ngram model
 #-----------------------------------------------------
-# param dt       : a data table
-#       fileName : where to save the model
-saveModel <- function(dt, fileName) {
-    cat("Save model to", fileName, "\n")
-    write.table(dt, fileName, col.names = T, row.names = F, sep="|", quote=T,
-                qmethod="double", fileEncoding = 'utf-8')
+# param df  : a ngram data frame
+# return a compressed data frame
+#
+compressBuffer <- function(df) {
+    #Empty backoff column
+    if (!"V3" %in% names(df))
+        df$V3 <- rep(0, nrow(df))
+    
+    #Rename for readability
+    df <- dplyr::select(df, ngram=V1, stats=V2, backoffWeight=V3)
+    
+    #Data compression
+    df$ngram <- apply(df, 1, function(x) return(ngram2hash(x["ngram"])))
+    df$stats <- apply(df, 1, function(x) return(stats2double(x["stats"], x["backoffWeight"])))
+    
+    return(select(df, ngram, stats))
 }
 
 #-----------------------------------------------------
@@ -181,9 +191,19 @@ saveModel <- function(dt, fileName) {
 # param fileName : compress model
 readCompressed <- function(fileName) {
     cat("Reading model", fileName, "\n")
-    dtCompressed <- read.table(fileName,allowEscapes = T, sep="|", 
-                               stringsAsFactors = F)
+    dtCompressed <- fread(fileName, sep="|", header=T, stringsAsFactors = F, encoding = "UTF-8")
     return(dtCompressed)
+}
+
+#-----------------------------------------------------
+# Save a compress model to disk
+#-----------------------------------------------------
+# param dt       : a data table
+#       fileName : where to save the model
+saveModel <- function(dt, fileName) {
+    cat("Save model to", fileName, "\n")
+    write.table(dt, fileName, col.names = T, row.names = F, sep="|", quote=T,
+                qmethod="double", fileEncoding = 'utf-8')
 }
 
 ###################

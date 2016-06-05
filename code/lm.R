@@ -13,27 +13,6 @@ DEBUG            = T
 # Implementation
 #
 #-----------------------------------------------------
-# Compress data ngram model
-#-----------------------------------------------------
-# param df  : a ngram data frame
-# return a compressed data frame
-#
-compressBuffer <- function(df) {
-    #Empty backoff column
-    if (!"V3" %in% names(df))
-        df$V3 <- rep(0, nrow(df))
-    
-    #Rename for readability
-    df <- dplyr::select(df, ngram=V1, stats=V2, backoffWeight=V3)
-    
-    #Data compression
-    df$ngram <- apply(df, 1, function(x) return(ngram2hash(x["ngram"])))
-    df$stats <- apply(df, 1, function(x) return(stats2double(x["stats"], x["backoffWeight"])))
-    
-    return(select(df, ngram, stats))
-}
-
-#-----------------------------------------------------
 # Hash a n-gram string
 #-----------------------------------------------------
 # param ngram  : a character vector
@@ -202,12 +181,13 @@ getNgramLog <- function(wordsList, indice, model, maxorder) {
 getSentenceLog <- function(strSentence, model, dictionary, maxorder) {
     #Unknown words
     wordsList <- replaceUnknown(strsplit(strSentence, " ")[[1]], dictionary)
+    wordsList <- c("<s>", wordsList, "</s>")
     
     if(DEBUG) cat("==> Scoring >", wordsList, "<\n")
     
     totalLog <- 0; oov<- 0
     #Do not select start symbol
-    for (i in seq(1, length(wordsList))) {
+    for (i in seq(2, length(wordsList))) {
         logProb <- getNgramLog(wordsList, i, model, maxorder)
         if(is.null(logProb))
             oov = oov + 1

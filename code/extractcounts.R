@@ -168,7 +168,7 @@ rmobj("gram1"); runGC()
 
 cat("Re-extract ngrams on text with <unk> words\n")
 #No token filtering here. One and two counts are needed for discount computation
-ngramList <- text2ngram(sentences, ngramOrders = c(1,2,3,4), minCounts = c(3,2,1,1))
+ngramList <- text2ngram(sentences, ngramOrders = c(1,2,3,4), minCounts = c(0,0,0,0))
 gram1 <- ngramList[[1]]
 gram2 <- ngramList[[2]]
 gram3 <- ngramList[[3]]

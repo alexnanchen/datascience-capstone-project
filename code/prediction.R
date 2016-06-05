@@ -73,8 +73,10 @@ predictNextWord <- function(strSentence, dictionary, maxOrder=4) {
     ngramContext <- paste(wordsList[startIndice:length(wordsList)], collapse=" ")
     dfResult <- predict(ngramContext) %>% dplyr::filter(!word%in% c("<unk>")) %>%
         mutate(prob=10^logprob)
+    cat("Done predicting")
     dfResult <- group_by(dfResult,word) %>% summarize(confidence=mean(prob), order=as.integer(max(order)))  %>%
         arrange(desc(order), desc(confidence))
+    cat("Done grouping by")
     normFactor <- sum(head(dfResult,n=10)$confidence)
     dfResult$confidence[1:10] <- sprintf("%0.2f%%", round(dfResult$confidence[1:10]/normFactor*100,2))
     
