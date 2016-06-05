@@ -28,3 +28,7 @@ Here  are the steps to train the models
     - 1 to 4 grams extraction
     - \<unk\> token for words that are not in the vocabulary list
 6. source("training.R")
+7. source("predict.R")
+    - Compression of trained models
+    - Prediction of next word for "what do you"
+
