@@ -91,3 +91,18 @@ getBackoffWeight <- function(dtLower, backoffContext) {
     #Some weight or NA
     return(filteredDt$backoffWeight)
 }
+
+#-----------------------------------------------------
+# Replace unknown words by <unk>
+#-----------------------------------------------------
+replaceUnknown <- function(wordsList) {
+    for (i in seq(1, length(wordsList))) {
+        #print(head(dictionary))
+        w <- tolower(wordsList[i])
+        if (nrow(dictionary[word1==w])==0)
+            wordsList[i] <- stri_enc_toutf8("<unk>")
+        else
+            wordsList[i] <- w
+    }
+    return(wordsList)
+}
