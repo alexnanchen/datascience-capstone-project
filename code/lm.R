@@ -7,7 +7,7 @@ MODELPRECISION   = 6
 DOUBLEPRECISION  = 1000000     #Six digits
 MINLOGPROB       = -99.999999
 MAXINT           = DOUBLEPRECISION * trunc(-round(MINLOGPROB))
-DEBUG            = T
+DEBUG            = F
 
 ###################
 # Implementation
@@ -130,12 +130,14 @@ getNgramLog_ <- function(ngram, backoffWeight, model, prefix="   ") {
     #Stop conditions: found or unknown
     if (isInModel(ngram, model)) {
         logProb <- getLogValue(ngram,model)
-        if(DEBUG) cat(prefix, "Found ngram '",ngram,"', ", logProb, "\n")
+        if(DEBUG) cat(prefix, "Found ngram '",ngram,"', ", logProb, ", added", backoffWeight, "to log probability\n")
         return(logProb+backoffWeight)
     }
     else if (order<=1) {
         if(DEBUG) cat(prefix, "Unknown log probability!\n")
         return(NULL)
+    } else {
+        if(DEBUG) cat(prefix, "No match for '", ngram,"'\n")
     }
     
     #Backoff
@@ -144,13 +146,12 @@ getNgramLog_ <- function(ngram, backoffWeight, model, prefix="   ") {
     backoffContext <- paste(wordsList[-(length(wordsList))], collapse=" ")
     
     bow <- 0
-    if (isInModel(backoffContext, model)) {
+    if (isInModel(backoffContext, model))
         bow <- getBowValue(backoffContext, model)
-        if(DEBUG) cat(prefix, "Found backoff '", backoffContext,"', ", bow, "\n")
-    }
     
+    if(DEBUG) cat(prefix, "Found backoff value for '", backoffContext,"' of", bow, "\n")
     if(DEBUG) cat(prefix, "Backing off to level", order, "\n")
-    return(getNgramLog_(ngram, backoffWeight + bow, model, paste(prefix," ")))
+    return(getNgramLog_(ngram, backoffWeight + bow, model, paste(prefix,"  ")))
 }
 
 ###################
@@ -166,7 +167,7 @@ getNgramLog_ <- function(ngram, backoffWeight, model, prefix="   ") {
 # return the log prob of word at indice 'indice'
 getNgramLog <- function(wordsList, indice, model, maxorder) {
     ngram <- getNgramFromList(wordsList, indice, maxorder)
-    if(DEBUG) cat("    Get log probability for '", ngram, "'\n")
+    if(DEBUG) cat("    --> Get log probability for '", ngram, "'\n")
     return(getNgramLog_(ngram,0.0, model))
 }
 
@@ -178,9 +179,12 @@ getNgramLog <- function(wordsList, indice, model, maxorder) {
 #       dictionary  : the dictionary of unigrams
 #       maxorder    : the highest model order
 # return the joint log probability with oov count
-getSentenceLog <- function(strSentence, model, dictionary, maxorder) {
-    #Unknown words
-    wordsList <- replaceUnknown(strsplit(strSentence, " ")[[1]], dictionary)
+getSentenceLog <- function(strSentence, model, dictionary, maxorder, replaceUnk=T) {
+    #Some preparation
+    wordsList <- strsplit(strSentence, " ")[[1]]
+    if(replaceUnk)
+        wordsList <- replaceUnknown(wordsList, dictionary)
+    #Start end tokens
     wordsList <- c("<s>", wordsList, "</s>")
     
     if(DEBUG) cat("==> Scoring >", wordsList, "<\n")
@@ -194,5 +198,5 @@ getSentenceLog <- function(strSentence, model, dictionary, maxorder) {
         else
             totalLog = totalLog + logProb
     }
-    return(list(totalLog=totalLog, nbw=length(wordsList), oov=oov))
+    return(list(totalLog=totalLog, nbw=length(wordsList)-2, oov=oov))
 }

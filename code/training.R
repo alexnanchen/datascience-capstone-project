@@ -65,17 +65,14 @@ getMarginalizedCount <- function(dt, fixedIndices = c(1), cCount = F, col="freq"
 #       discount : a fixed discount
 # return a data table with a log10 probability column
 #
-trainProb <- function(dt, mincount=0) {
+trainProb <- function(dt) {
     wIndices <- grep("word*",names(dt))
     order <- length(wIndices)
     
     cat("###### Normal counts, order", order, "\n")
-    #Discount on effective counts and on unpruned ngrams
+    #Discount on effective counts
     discount <- getDiscount(dt, col = "freq")
     cat("  --> Using discount value of", discount, "\n")
-    #Model pruning before marginalization count
-    cat("  --> Prune with min count value of", mincount,"\n")
-    dt <- dt[freq>mincount]
     
     #Model estimation
     cat("  --> Get marginalized counts\n")
@@ -102,7 +99,7 @@ trainProb <- function(dt, mincount=0) {
 #       discount : a fixed discount
 # return a data table with a probability column
 #
-trainContinuationProb <- function(dtLower, dtHigher, mincount=0) {
+trainContinuationProb <- function(dtLower, dtHigher) {
     wIndicesLower <- grep("word*",names(dtLower))
     wIndicesHigher <- grep("word*",names(dtHigher))
     ######################
@@ -144,10 +141,6 @@ trainContinuationProb <- function(dtLower, dtHigher, mincount=0) {
     discount <- getDiscount(dtLower, col = "contCount")
     cat("  --> Using discount of", discount, "\n")
     
-    #Model pruning before marginalization count
-    cat("  --> Prune with min count value of", mincount,"\n")
-    dtLower <- dtLower[contCount>mincount]
-    
     ######################
     # Normalization count:
     # 
@@ -172,8 +165,9 @@ trainContinuationProb <- function(dtLower, dtHigher, mincount=0) {
         ret$colNames, "'\nIndex: \n", sep="");  print(ret$index[1,])
     
     #Unigram case
-    if (is.null(ret$colNames))
+    if (is.null(ret$colNames)) {
         dtLower$totalMarginalized <- rep(ret$index$contCount, nrow(dtLower))
+    }
     else {
         dtLower <- suppressWarnings(merge(dtLower, ret$index, by.x=names(dtLower)[fixedIndices],
                          by.y = ret$colNames, all.x=T))
@@ -298,24 +292,24 @@ gram4 <- readCounts("counts4.txt")
 cat("Start training\n")
 cat("4 grams training\n")
 #4-grams discounted probabilities
-ret <- trainProb(gram4, mincount = 1)
+ret <- trainProb(gram4)
 gram4 <- ret$dt; D4 <- ret$discount
 
 #3-grams discounted probabilities
 cat("3 grams training\n")
 #gram3 <- trainProb(gram3, mincount = 1)
-ret <- trainContinuationProb(gram3, gram4, mincount=1)
+ret <- trainContinuationProb(gram3, gram4)
 gram3 <- ret$dt; D3 <- ret$discount
 
 #2-grams discounted countinuation probabilities
 cat("2 grams training\n")
-ret <- trainContinuationProb(gram2, gram3, mincount=2)
+ret <- trainContinuationProb(gram2, gram3)
 gram2 <- ret$dt; D2 <- ret$discount
 
 #1-grams discounted countinuation probabilities
 #Fixed vocabulary, no discount (see log10(1/42570)) or pruning
 cat("1 grams training\n")
-ret <- trainContinuationProb(gram1, gram2, mincount=0)
+ret <- trainContinuationProb(gram1, gram2)
 gram1 <- ret$dt; D1 <- ret$discount
 
 cat("Backoff weight computation\n")
@@ -327,6 +321,12 @@ gram2 <- trainBackoffWeight(gram2, gram3, D3)
 
 #1-grams backoff weights
 gram1 <- trainBackoffWeight(gram1, gram2, D2)
+
+cat("Pruning model\n")
+gram1 <- gram1[contCount>=0]
+gram2 <- gram2[contCount>=3]
+gram3 <- gram3[contCount>=2]
+gram4 <- gram4[freq>=2]
 
 cat("1-grams", nrow(gram1), "\n2-grams", nrow(gram2), "\n3-grams", nrow(gram3),
     "\n4-grams", nrow(gram4), "\n")

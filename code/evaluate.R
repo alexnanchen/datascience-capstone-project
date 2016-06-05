@@ -13,6 +13,12 @@ source("code/lm.R")
 ###################
 # Main
 #
+#logValue <- getNgramLog(c("how", "are", "you"), 3, model, 4)
+#print(logValue)
+#strSentence <- "join hands to create a safer environment"
+#strSentence <- "How are"
+#ret <- getSentenceLog(strSentence, model, dictionary, 4)
+
 dt1<-NULL
 dt2<-NULL
 dt3<-NULL
@@ -45,15 +51,35 @@ model = rbindlist(list(dt1,dt2,dt3,dt4))
 #Ordered index
 setkey(model,ngram)
 
-dictionary <- fread(paste0("vocabulary.txt"), sep="\t", header=T,
-                    stringsAsFactors = F, encoding = "UTF-8")
+#Some data
+dictionary <- data.table(read.table("vocabulary.txt", header=T, allowEscapes = T, sep="\t",
+                               stringsAsFactors = F, encoding="UTF-8"))
 
-logValue <- getNgramLog(c("how", "are", "you"), 3, model, 4)
-print(logValue)
+testFile <- sprintf("%s/en_US/en_US_news_test.txt", CLEANDIR)
+sentences <- read.table(testFile, allowEscapes = T, sep="|", header=F, 
+                        stringsAsFactors = F, encoding = "UTF-8", col.names = c("text"))
 
-#strSentence <- "join hands to create a safer environment"
-strSentence <- "How are"
-ret <- getSentenceLog(strSentence, model, dictionary, 4)
+#Unknown words replacement as a batch
+sentences <- updateUnknownWords(dictionary, sentences)
 
-ppl1 <- 10^(-ret$totalLog /(ret$nbw - ret$oov+1))
-cat("Total log:", ret$totalLog, "- nb words:", ret$nbw, "- oov:", ret$oov, "- ppl1:", ppl1, "\n")
+#sentences = data.table(text="roy halladay said he began to get that certain feeling along")
+
+#Main work
+cat("Computing log probabilities per sentences\n")
+totalLog <- 0; nbw <- 0;oov <- 0
+count <- 0
+for (s in tail(sentences$text, n=1000)) {
+    ret <- getSentenceLog(s, model, dictionary, 4, F)
+    #cat(ret$totalLog, s,"\n")
+    totalLog <- totalLog + ret$totalLog
+    nbw <- nbw + ret$nbw
+    oov <- oov + ret$oov
+    count <- count + 1
+    if (count %% 100 == 0)
+        cat("Done ", count, "sentences\n")
+}
+
+ppl1 <- 10^(-totalLog /(nbw - oov + count))
+cat("Total log:", totalLog, "- nb words:", nbw, "- oov:", oov, "nb sentences:", count, 
+    "- ppl1:", ppl1, "\n")
+

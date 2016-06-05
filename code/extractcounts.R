@@ -70,52 +70,6 @@ text2ngram <- function(sentences, ngramOrders, minCounts) {
 }
 
 #-----------------------------------------------------
-# Update unknown words with <unk> token
-#-----------------------------------------------------
-# param gram1     : a list of unique words
-#       sentences : a list of sentences
-# return a list of sentences with <unk> tokens
-#
-updateUnknownWords <- function(gram1, sentences) {
-    #Index on unique word list
-    setkey(gram1,word1)
-    
-    #Add sentence separator
-    if (is.na(gram1[enc2utf8("dotsep")]$freq))
-        gram1 <- rbind(list(enc2utf8("dotsep"),100), gram1)
-    
-    #Join text for faster processing
-    print("Joining sentences")
-    strText <- paste(sentences$text, collapse = " dotsep ")
-    
-    #Make a table
-    print("Making a data table")
-    dtText <- data.table(strsplit(strText," ")[[1]])
-    dtText$seq <- seq(1, nrow(dtText))
-    setkey(dtText,V1)
-    
-    #Join tables to get unknown words indices
-    print("Merging unigram table and text words table")
-    dtText <- suppressWarnings(merge(dtText, gram1, by.x="V1", 
-                                     by.y = "word1", all.x=T))
-    print("Setting unknown words")
-    dtText$V1[which(is.na(dtText$freq))] <- "<unk>"
-    
-    #Re order and join words
-    print("Reorder words and separate into sentences")
-    setkey(dtText,seq)
-    print(dtText)
-    strText <- paste(dtText$V1, collapse=" ")
-    
-    #Make a data frame
-    print("Make a data frame")
-    df <- tbl_df(data.frame(text=(strsplit(strText, " dotsep ")[[1]]),
-                 stringsAsFactors=F))
-    Encoding(df$text) <- "UTF-8"
-    return(df)
-}
-
-#-----------------------------------------------------
 # Write counts for training to disk
 #-----------------------------------------------------
 # param ngram     : a count data table
