@@ -68,7 +68,9 @@ predict <- function(ngramContext, backoffWeight=0, dfResult=data.frame()) {
 # return an ordered data frame
 #
 predictNextWord <- function(strSentence, dictionary, maxOrder=4) {
+    strSentence <- sprintf("<s> %s", strSentence)
     wordsList <- replaceUnknown(strsplit(strSentence, " ")[[1]], dictionary)
+    cat("Predict next word for", wordsList, "\n")
     startIndice <- max(length(wordsList)-maxOrder+2, 0)
     ngramContext <- paste(wordsList[startIndice:length(wordsList)], collapse=" ")
     dfResult <- predict(ngramContext) %>% dplyr::filter(!word%in% c("<unk>")) %>%
