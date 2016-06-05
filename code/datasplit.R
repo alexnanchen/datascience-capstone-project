@@ -107,7 +107,7 @@ for (lang in LANGUAGES) {
         
         #Read and sample
         df <- readSentences(srcFile, 3, 50)
-        setsList <- sampleSets(df)
+        setsList <- sampleSets(df, dev=0.2, test=0.1)
         
         #Output selected sentences
         dir.create(sprintf("%s/%s",DATADIR,lang), showWarnings = F)

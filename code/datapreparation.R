@@ -34,11 +34,13 @@ readAllSamples <- function() {
     for (lang in LANGUAGES) {
         dir.create(paste0(CLEANDIR,"/",lang), showWarnings = F)
         for (src in SOURCES) {
-            #Input and output names
-            fileName <- sprintf("%s.%s.txt", lang, src)
-            srcFile <- sprintf("%s/%s/%s", SAMPLEDIR, lang, fileName)
-            #Read sample sentences
-            ret[[lang]][[src]] <- readSample(srcFile)
+            for (s in c("train", "dev", "test")) {
+                #Input and output names
+                fileName <- sprintf("%s_%s_%s.txt", lang, src, s)
+                srcFile <- sprintf("%s/%s/%s", SAMPLEDIR, lang, fileName)
+                #Read sample sentences
+                ret[[lang]][[src]][[s]] <- readSample(srcFile)
+            }
         }
     }
     return(ret)
@@ -73,13 +75,15 @@ cleanSentences <- function(df, offensiveWords, destFile) {
     #Join text for faster processing
     strText <- paste(df$text, collapse = " dotsep ")
     
+    cat("  --> Extra tabs, carriage returns and new lines removal\n")
+    
     #Tab, carriage return and new lines replacements
     strText <- gsub("\t|\r|\n", " dotsep ", strText, perl = T)
     
     #-----------------------------
     # Character based replacement
     #
-    cat("  --> Character based replacement")
+    cat("  --> Character based replacement\n")
     #Emoticons replacement
     strText <- mapUtf8Characters(strText, EMOTICONSMAP)
     
@@ -92,7 +96,7 @@ cleanSentences <- function(df, offensiveWords, destFile) {
     #-----------------------------
     # Other replacement
     #
-    cat("  --> Other replacement")
+    cat("  --> Other replacement\n")
     c <- VCorpus(VectorSource(strText))
     print("To lower")
     c <- tm_map(c, tolower)
@@ -123,18 +127,21 @@ cleanSentences <- function(df, offensiveWords, destFile) {
 #
 # Load data sample
 samples <- readAllSamples()
+
 offensiveWords <- read.csv("resources/offensive.csv",header=F,stringsAsFactors = F)
 
 # Main processing
 for (lang in LANGUAGES) {
     for (src in SOURCES) {
-        #Output names
-        fileName <- sprintf("%s.%s.txt", lang, src)
-        destFile <- sprintf("%s/%s/%s", CLEANDIR, lang, fileName)
-        
-        #Data preparation
-        cat("Cleaning ", fileName)
-        cleanSentences(samples$en_US[[src]], offensiveWords$V1, destFile)
+        for (s in c("train", "dev", "test")) {
+            #Output names
+            fileName <- sprintf("%s_%s_%s.txt", lang, src, s)
+            destFile <- sprintf("%s/%s/%s", CLEANDIR, lang, fileName)
+            
+            #Data preparation
+            cat("Cleaning ", fileName)
+            cleanSentences(samples[[lang]][[src]][[s]], offensiveWords$V1, destFile)
+        }
     }
 } 
 

@@ -41,24 +41,30 @@ sampleSentences <- function(df, sampleSize) {
 ###################
 # Main
 #
-MAXSENTPERSRC = 100000
+MAXSENTPERSRC = c(100000, 2000, 1000)
+sets <- c("train", "dev", "test")
 
 for (lang in LANGUAGES) {
     for (src in SOURCES) {
-        #Input and output names
-        fileName <- sprintf("%s_%s_train.txt", lang, src)
-        srcFile <- sprintf("%s/%s/%s", DATADIR, lang, fileName)
-        destFile <- sprintf("%s/%s/%s", SAMPLEDIR, lang, fileName)
-        
-        #Read and sample
-        df <- readSentences(srcFile, 3, 50)
-        dfSelected <- sampleSentences(df, MAXSENTPERSRC)
-        
-        #Output selected sentences
-        dir.create(sprintf("%s/%s",SAMPLEDIR,lang), showWarnings = F)
-        cat("Outputing", destFile, "\n")
-        write.table(dfSelected, destFile, sep="|", row.names = F, col.names = F, quote=T, qmethod = "double")
+        for (i in seq(1,3)) {
+            setName <- sets[i]
+            #Input and output names
+            fileName <- sprintf("%s_%s_%s.txt", lang, src, setName)
+            srcFile <- sprintf("%s/%s/%s", DATADIR, lang, fileName)
+            destFile <- sprintf("%s/%s/%s", SAMPLEDIR, lang, fileName)
+            
+            #Read and sample
+            df <- readSentences(srcFile, 3, 50)
+            dfSelected <- sampleSentences(df, MAXSENTPERSRC[i])
+            
+            #Output selected sentences
+            dir.create(sprintf("%s/%s",SAMPLEDIR,lang), showWarnings = F)
+            cat("Outputing", destFile, "\n")
+            write.table(dfSelected, destFile, sep="|", row.names = F, col.names = F, quote=T, qmethod = "double")
+        }
     }
 } 
+
+
 
 rm(fileName, srcFile, destFile, df, dfSelected)
