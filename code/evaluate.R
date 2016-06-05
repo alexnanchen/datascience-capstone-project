@@ -9,84 +9,34 @@ library(testit)
 source("code/lm.R")
 source("code/constants.R")
 
-READBUFFER       = 5000
-
-###################
-# Implementation
-#
-#-----------------------------------------------------
-# Read a n-gram model from disk
-#-----------------------------------------------------
-# param fileName  : the n-gram text file
-# return a data table
-#
-readModel <- function(fileName) {
-    cat("Reading ", fileName,"\n")
-    
-    #File size in lines
-    cmd <- sprintf("wc -l %s", fileName)
-    nbLines <- as.integer(strsplit(system(cmd, intern = T),fileName))
-    
-    #How many buffers do we have to read
-    nbBuffers <- (nbLines %/% READBUFFER) + as.integer((nbLines %% READBUFFER) > 0)
-    cat(nbLines, "lines to read into", nbBuffers, "buffers of", READBUFFER,"sizes\n")
-    
-    #Read all buffers
-    dt <- NULL; skip <- 0
-    for (i in seq(1,nbBuffers)) {
-        dt <- readBuffer(fileName, skip, dt)
-        skip <- skip + READBUFFER
-    } 
-   
-    assert(nrow(dt) == nbLines)
-    
-    return(dt)
-}
-
-#-----------------------------------------------------
-# Read a buffer of n-grams
-#-----------------------------------------------------
-# param fileName  : the n-gram text file
-#       skip      : number of rows to skip
-#       df        : where to append the rows buffer
-# return a data frame
-#
-readBuffer <- function(fileName, skip, df) {
-    #Read in memory buffer
-    dfBuffer <- tbl_df(read.table(fileName,allowEscapes = T, sep="|", 
-                        stringsAsFactors = F, nrow=READBUFFER, skip=skip))
-    
-    #Compress values to save memory space
-    dfBuffer <- data.table(compressBuffer(dfBuffer))
-    
-    #Append buffer
-    if (is.null(df))
-        df <- dfBuffer
-    else 
-        df <- rbindlist(list(df, dfBuffer))
-
-    return(df)
-}
-
 ###################
 # Main
 #
 dt1 <- readModel("gram1.txt")
 dt2 <- readModel("gram2.txt")
 dt3 <- readModel("gram3.txt")
+dt4 <- readModel("gram3.txt")
+
+saveModel(dt1, "gram1e.txt")
+saveModel(dt2, "gram2e.txt")
+saveModel(dt3, "gram3e.txt")
+saveModel(dt4, "gram4e.txt")
 
 #One table
-model = rbindlist(list(dt1,dt2,dt3))
+model = rbindlist(list(dt1,dt2,dt3,dt4))
 
 #Ordered index
 setkey(model,ngram)
 
-logValue <- getNgramLog(c("<s>", "how", "are", "you", "</s>"), 4, model, 3)
+dictionary <- fread(paste0("vocabulary.txt"), sep="\t", header=T, 
+                    stringsAsFactors = F, encoding = "UTF-8")
+
+logValue <- getNgramLog(c("how", "are", "you"), 3, model, 4)
 print(logValue)
 
-sentence <- "join hands to create a safer environment"
-nbw <- length(strsplit(sentence," ")[[1]]) #End of sentence token
-ret <- getSentenceLog(sentence, model, 3)
+#strSentence <- "join hands to create a safer environment"
+strSentence <- "How are"
+ret <- getSentenceLog(strSentence, model, dictionary, 4)
 
-ppl1 <- 10^(-ret$totalLog /(nbw - ret$oov + 1))
-cat("Total log:", ret$totalLog, "- nb words:", nbw, "- oov:", ret$oov, "- ppl1:", ppl1, "\n")
+ppl1 <- 10^(-ret$totalLog /(ret$nbw - ret$oov))
+cat("Total log:", ret$totalLog, "- nb words:", ret$nbw, "- oov:", ret$oov, "- ppl1:", ppl1, "\n")
