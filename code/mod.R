@@ -3,6 +3,8 @@
 #
 source("code/config.R")
 
+READBUFFER = 5000
+
 ###################
 # General
 #
@@ -83,7 +85,6 @@ readModel <- function(fileName, order, evaluate=F) {
     #Read all buffers
     dt <- NULL; skip <- 0
     for (i in seq(1,nbBuffers)) {
-        dt <- NULL
         if(!evaluate) 
             dt <- readBuffer(fileName, skip, dt, order)
         else
@@ -95,28 +96,6 @@ readModel <- function(fileName, order, evaluate=F) {
     assert(nrow(dt) == nbLines)
     
     return(dt)
-}
-
-#-----------------------------------------------------
-# Save a compress model to disk
-#-----------------------------------------------------
-# param dt       : a data table
-#       fileName : where to save the model
-saveModel <- function(dt, fileName) {
-    cat("Save model to", fileName, "\n")
-    write.table(dt, fileName, col.names = T, row.names = F, sep="|", quote=T,
-                qmethod="double", fileEncoding = 'utf-8')
-}
-
-#-----------------------------------------------------
-# Read a compress model from disk
-#-----------------------------------------------------
-# param fileName : compress model
-readCompressed <- function(fileName) {
-    cat("Reading model", fileName, "\n")
-    dtCompressed <- read.table(fileName,allowEscapes = T, sep="|", 
-                               stringsAsFactors = F)
-    return(dtCompressed)
 }
 
 #-----------------------------------------------------
@@ -183,6 +162,28 @@ readBufferEvaluate <- function(fileName, skip, df) {
         df <- rbindlist(list(df, dfBuffer))
     
     return(df)
+}
+
+#-----------------------------------------------------
+# Save a compress model to disk
+#-----------------------------------------------------
+# param dt       : a data table
+#       fileName : where to save the model
+saveModel <- function(dt, fileName) {
+    cat("Save model to", fileName, "\n")
+    write.table(dt, fileName, col.names = T, row.names = F, sep="|", quote=T,
+                qmethod="double", fileEncoding = 'utf-8')
+}
+
+#-----------------------------------------------------
+# Read a compress model from disk
+#-----------------------------------------------------
+# param fileName : compress model
+readCompressed <- function(fileName) {
+    cat("Reading model", fileName, "\n")
+    dtCompressed <- read.table(fileName,allowEscapes = T, sep="|", 
+                               stringsAsFactors = F)
+    return(dtCompressed)
 }
 
 ###################
