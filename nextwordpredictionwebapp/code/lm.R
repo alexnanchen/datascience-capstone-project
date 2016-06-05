@@ -11,27 +11,6 @@ DEBUG            = T
 # Implementation
 #
 #-----------------------------------------------------
-# Compress data ngram model
-#-----------------------------------------------------
-# param df  : a ngram data frame
-# return a compressed data frame
-#
-compressBuffer <- function(df) {
-    #Empty backoff column
-    if (!"V3" %in% names(df))
-        df$V3 <- rep(0, nrow(df))
-    
-    #Rename for readability
-    df <- dplyr::select(df, ngram=V1, stats=V2, backoffWeight=V3)
-    
-    #Data compression
-    df$ngram <- apply(df, 1, function(x) return(ngram2hash(x["ngram"])))
-    df$stats <- apply(df, 1, function(x) return(stats2double(x["stats"], x["backoffWeight"])))
-    
-    return(select(df, ngram, stats))
-}
-
-#-----------------------------------------------------
 # Hash a n-gram string
 #-----------------------------------------------------
 # param ngram  : a character vector
@@ -194,22 +173,24 @@ getNgramLog <- function(wordsList, indice, model, maxorder) {
 #-----------------------------------------------------
 # param strSentence : a character vector
 #       model       : a data table model
+#       dictionary  : the dictionary of unigrams
 #       maxorder    : the highest model order
 # return the joint log probability with oov count
-getSentenceLog <- function(strSentence, model, maxorder) {
-    strSentence <- paste("<s>",strSentence,"</s>")
-    if(DEBUG) cat("==> Scoring", strSentence, "\n")
+getSentenceLog <- function(strSentence, model, dictionary, maxorder) {
+    #Unknown words
+    wordsList <- replaceUnknown(strsplit(strSentence, " ")[[1]], dictionary)
+    wordsList <- c("<s>", wordsList, "</s>")
     
-    wordsList <- strsplit(strSentence," ")[[1]]
+    if(DEBUG) cat("==> Scoring >", wordsList, "<\n")
+    
     totalLog <- 0; oov<- 0
-    
     #Do not select start symbol
     for (i in seq(2, length(wordsList))) {
-        logProb <- getNgramLog(wordsList,i, model, maxorder)
+        logProb <- getNgramLog(wordsList, i, model, maxorder)
         if(is.null(logProb))
             oov = oov + 1
         else
             totalLog = totalLog + logProb
     }
-    return(list(totalLog=totalLog, oov=oov))
+    return(list(totalLog=totalLog, nbw=length(wordsList), oov=oov))
 }

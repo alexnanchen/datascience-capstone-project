@@ -23,6 +23,8 @@ shinyServer(function(input, output) {
         if(input$predictButton > 0 && as.integer(input$options)==1) {
             verbose <- paste(ret()$log,collapse="<br>")
             verbose <- gsub("<unk>", "&lt;unk&gt;", verbose)
+            verbose <- gsub("<s>", "&lt;s&gt;", verbose)
+            verbose <- gsub("</s>", "&lt;/s&gt;", verbose)
             verbose <- paste("<h4>Algorithm trace</h4>",verbose)
         }
     })

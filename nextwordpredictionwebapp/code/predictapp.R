@@ -136,14 +136,21 @@ replaceUnknown <- function(wordsList) {
 # return an ordered data frame
 #
 predictNextWord <- function(strSentence, maxOrder=4) {
+    strSentence <- sprintf("<s> %s", strSentence)
     wordsList <- replaceUnknown(strsplit(strSentence, " ")[[1]])
+    cat("Predict next word for", wordsList, "\n")
     startIndice <- max(length(wordsList)-maxOrder+2, 0)
     ngramContext <- paste(wordsList[startIndice:length(wordsList)], collapse=" ")
     log <<- c()
-    dfResult <- predict(ngramContext) %>% dplyr::filter(!word%in% c("<unk>")) %>%
+    dfResult <- predict(ngramContext) %>% dplyr::filter(!word%in% c("<unk>","</s>")) %>%
                             mutate(prob=10^logprob)
-    dfResult <- group_by(dfResult,word) %>% summarize(confidence=mean(prob), order=as.integer(max(order)))  %>%
-                        arrange(desc(order), desc(confidence))
+    dfResult <- as.data.table(dfResult)
+    cat("Done predicting\n")
+    dfResult <- dfResult[,.(confidence=mean(prob), order=as.integer(max(order))), by=word]
+    dfResult <- dfResult[order(-order,-confidence)]
+    #dfResult <- group_by(dfResult,word) %>% summarize(confidence=mean(prob), order=as.integer(max(order)))  %>%
+    #    arrange(desc(order), desc(confidence))
+    cat("Done grouping\n")
     normFactor <- sum(head(dfResult,n=10)$confidence)
     dfResult$confidence[1:10] <- sprintf("%0.2f%%", round(dfResult$confidence[1:10]/normFactor*100,2))
     
