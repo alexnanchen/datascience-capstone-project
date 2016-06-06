@@ -12,6 +12,22 @@ source("code/mod.R")
 source("code/lm.R")
 
 ###################
+# Implementation
+#
+compressModels <- function() {
+    cat("Re compress files")
+    dt1 <<- readModel("gram1_pruned.txt",1,T)
+    dt2 <<- readModel("gram2_pruned.txt",2,T)
+    dt3 <<- readModel("gram3_pruned.txt",3,T)
+    dt4 <<- readModel("gram4_pruned.txt",4,T)
+    
+    saveModel(dt1, "gram1e.txt")
+    saveModel(dt2, "gram2e.txt")
+    saveModel(dt3, "gram3e.txt")
+    saveModel(dt4, "gram4e.txt")
+}
+
+###################
 # Main
 #
 #logValue <- getNgramLog(c("how", "are", "you"), 3, model, 4)
@@ -28,19 +44,10 @@ dt4<-NULL
 #User check
 if (file.exists("gram1e.txt")) {
     resp <- readline("Compress version exist, recompress (y|n)")
-    if (resp == 'y') {
-        cat("Re compress files")
-        dt1 <- readModel("gram1.txt",1,T)
-        dt2 <- readModel("gram2.txt",2,T)
-        dt3 <- readModel("gram3.txt",3,T)
-        dt4 <- readModel("gram4.txt",4,T)
-        
-        saveModel(dt1, "gram1e.txt")
-        saveModel(dt2, "gram2e.txt")
-        saveModel(dt3, "gram3e.txt")
-        saveModel(dt4, "gram4e.txt")
-    }
-}
+    if (resp == 'y')
+        compressModels()
+} else
+    compressModels()
 
 #Compress model loading
 dt1 <- readCompressed("gram1e.txt")
@@ -62,7 +69,7 @@ setkey(model,ngram)
 dictionary <- data.table(read.table("vocabulary.txt", header=T, allowEscapes = T, sep="\t",
                                stringsAsFactors = F, encoding="UTF-8"))
 
-testFile <- sprintf("%s/en_US/en_US_news_test.txt", CLEANDIR)
+testFile <- sprintf("%s/en_US/en_US_twitter_test.txt", CLEANDIR)
 sentences <- read.table(testFile, allowEscapes = T, sep="|", header=F, 
                 stringsAsFactors = F, encoding = "UTF-8", col.names = c("text"))
 
@@ -70,6 +77,10 @@ sentences <- read.table(testFile, allowEscapes = T, sep="|", header=F,
 
 #Unknown words replacement as a batch
 sentences <- updateUnknownWords(dictionary, sentences)
+
+#Store for comparison with other toolkits
+write.table(sentences, "testing.txt", quote=F, row.names = F, col.names = F,
+            fileEncoding = "UTF-8")
 
 #Main work
 cat("Computing log probabilities per sentences\n")

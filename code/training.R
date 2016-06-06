@@ -328,8 +328,7 @@ writeModel <- function(dt, fileName) {
     tblDf$logprob  <- round(tblDf$logprob,MODELPRECISION)
     
     #Data serialization
-    strName <- sprintf("gram%d.txt", length(wIndices))
-    write.table(tblDf, strName, col.names = F, row.names = F, sep="|", quote=T,
+    write.table(tblDf, fileName, col.names = F, row.names = F, sep="|", quote=T,
                 qmethod="double", fileEncoding = 'utf-8')
 }
 

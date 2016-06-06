@@ -42,5 +42,5 @@ l <- list(dt1, dt2, dt3, dt4)
 dictionary <- fread(paste0("vocabulary.txt"), sep="\t", header=T, 
                     stringsAsFactors = F, encoding = "UTF-8")
 
-dfResult <- predictNextWord("what do", dictionary)
+dfResult <- predictNextWord("what do you", dictionary)
 print(head(dfResult, n=10))
