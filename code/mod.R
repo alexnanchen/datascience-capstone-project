@@ -212,6 +212,8 @@ saveModel <- function(dt, fileName) {
 #-----------------------------------------------------
 # Update unknown words with <unk> token
 #-----------------------------------------------------
+# It assumes sentences boundaries are under the
+# form <s> </s>
 # param gram1     : a list of unique words
 #       sentences : a list of sentences
 # return a list of sentences with <unk> tokens
@@ -230,7 +232,7 @@ updateUnknownWords <- function(gram1, sentences) {
     
     #Make a table
     print("Making a data table")
-    dtText <- data.table(strsplit(strText," ")[[1]])
+    dtText <- data.table(strsplit(strText,"[ ]+")[[1]])
     dtText$seq <- seq(1, nrow(dtText))
     setkey(dtText,V1)
     
