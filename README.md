@@ -17,7 +17,7 @@ The file structure is has following:
  ``` 
 
 ### Training
-Here  are the steps to train the models
+Here  are the steps to train the models:
 
 1. source("datascience-capstone-project/setenv.R")
 2. source("datasplit.R") - Split the data into trainin, development and testing sets
