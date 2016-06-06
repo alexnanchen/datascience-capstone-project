@@ -85,8 +85,7 @@ writeCounts <- function(ngram, fileName) {
 ###################
 # Main
 #
-SOURCES <- c("news")
-MINVOCABULARYCOUNT = 0
+MINVOCABULARYCOUNT = 3
 
 #Read cleaned files
 sentences <- NULL
@@ -105,6 +104,8 @@ cat("N-gram extraction\n")
 print("  --> Vocabulary extraction")
 gram1 <- text2ngram(sentences, ngramOrders = c(1), minCounts = c(MINVOCABULARYCOUNT))[[1]]
 writeCounts(gram1,"vocabulary.txt")
+
+#User check
 readline("Please check 'vocabulary.txt' file and then press <enter>")
 gram1 <- data.table(read.table("vocabulary.txt", header=T, allowEscapes = T, sep="\t",
                     stringsAsFactors = F))
@@ -116,13 +117,13 @@ sentences <- updateUnknownWords(gram1, sentences)
 #Save sentences
 write.table(sentences, "training.txt", quote=F, sep="\t", row.names=F,
             col.names=F, fileEncoding = "UTF-8")
-writeCounts(gram1, "counts1.txt")
 
 #Clean some memory
 rmobj("gram1"); runGC()
 
 cat("Re-extract ngrams on text with <unk> words\n")
-#No token filtering here. One and two counts are needed for discount computation
+#No token filtering here. One and two counts are needed
+#for discount computation and smoothing
 ngramList <- text2ngram(sentences, ngramOrders = c(1,2,3,4), minCounts = c(0,0,0,0))
 gram1 <- ngramList[[1]]
 gram2 <- ngramList[[2]]
