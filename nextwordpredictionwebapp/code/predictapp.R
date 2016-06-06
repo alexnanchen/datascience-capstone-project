@@ -122,7 +122,7 @@ replaceUnknown <- function(wordsList) {
     for (i in seq(1, length(wordsList))) {
         #print(head(dictionary))
         w <- tolower(wordsList[i])
-        if (nrow(dictionary[word1==w])==0)
+        if (suppressWarnings(nrow(dictionary[word1==w]))==0)
             wordsList[i] <- stri_enc_toutf8("<unk>")
         else
             wordsList[i] <- w
@@ -148,7 +148,7 @@ predictNextWord <- function(strSentence, maxOrder=4) {
     dfResult <- as.data.table(dfResult)
     cat("Done predicting\n")
     dfResult <- dfResult[,.(confidence=mean(prob), order=as.integer(max(order))), by=word]
-    dfResult <- dfResult[order(-order,-confidence)]
+    dfResult <- dfResult[order(-confidence,-order)]
     #dfResult <- group_by(dfResult,word) %>% summarize(confidence=mean(prob), order=as.integer(max(order)))  %>%
     #    arrange(desc(order), desc(confidence))
     cat("Done grouping\n")

@@ -25,7 +25,8 @@ shinyUI(
                       span("what is the", class="sentence"), br(),
                       span("the rest of", class="sentence"), br(),
                       span("what do you intend", class="sentence"), br(),
-                      span("what are ophthamologist (unknown word)", class="sentence"))
+                      span("my name is", class="sentence"), br(),
+                      span("the ophthamologist watch (unknown word)", class="sentence"))
                      ),
                   
                   mainPanel(
