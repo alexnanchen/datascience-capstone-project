@@ -7,7 +7,7 @@ MODELPRECISION   = 6
 DOUBLEPRECISION  = 1000000     #Six digits
 MINLOGPROB       = -99.999999
 MAXINT           = DOUBLEPRECISION * trunc(-round(MINLOGPROB))
-DEBUG            = F
+DEBUG            = T
 
 ###################
 # Implementation
@@ -181,7 +181,7 @@ getNgramLog <- function(wordsList, indice, model, maxorder) {
 # return the joint log probability with oov count
 getSentenceLog <- function(strSentence, model, dictionary, maxorder, replaceUnk=T) {
     #Some preparation
-    wordsList <- strsplit(strSentence, " ")[[1]]
+    wordsList <- strsplit(strSentence, "[ ]+")[[1]]
     if(replaceUnk)
         wordsList <- replaceUnknown(wordsList, dictionary)
     #Start end tokens

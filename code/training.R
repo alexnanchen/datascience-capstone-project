@@ -2,6 +2,7 @@ library(dplyr)
 library(data.table)
 library(RWeka)
 library(tidyr)
+library(testit)
 
 ###################
 # Environment
@@ -9,6 +10,7 @@ library(tidyr)
 source("code/mod.R")
 source("code/constants.R")
 source("code/lm.R")
+
 
 ###################
 # Implementation
@@ -66,6 +68,7 @@ getMarginalizedCount <- function(dt, fixedIndices = c(1), cCount = F, col="freq"
 # return a data table with a log10 probability column
 #
 trainProb <- function(dt) {
+    #Words indices
     wIndices <- grep("word*",names(dt))
     order <- length(wIndices)
     
@@ -84,6 +87,7 @@ trainProb <- function(dt) {
     cat("  --> Compute probabilities\n")
     setnames(dt, "freq.x", "freq")
     setnames(dt, "freq.y", "totalMarginalized")
+    
     #Probability computation
     dt$logprob <- log10(pmax(dt$freq-discount,0)/dt$totalMarginalized)
     return(list(dt=dt,discount=discount))
@@ -133,13 +137,15 @@ trainContinuationProb <- function(dtLower, dtHigher) {
     #All grams have been observed at least once
     assert(all(dtLower$contCount>0))
    
-    #Unigram, set "<s>" contCount to 0 before normalization count
-    if (length(wIndicesLower) == 1)
-        dtLower["<s>"]$contCount <- 0
-    
     #Discount on effective counts
     discount <- getDiscount(dtLower, col = "contCount")
     cat("  --> Using discount of", discount, "\n")
+    
+    #Unigram, set "<s>" contCount to 0 before normalization count
+    if (length(wIndicesLower) == 1) {
+        dtLower["<s>"]$contCount <- 0
+        discount <- 0
+    }
     
     ######################
     # Normalization count:
@@ -297,7 +303,7 @@ gram4 <- ret$dt; D4 <- ret$discount
 
 #3-grams discounted probabilities
 cat("3 grams training\n")
-#gram3 <- trainProb(gram3, mincount = 1)
+#ret <- trainProb(gram3)
 ret <- trainContinuationProb(gram3, gram4)
 gram3 <- ret$dt; D3 <- ret$discount
 
@@ -323,15 +329,15 @@ gram2 <- trainBackoffWeight(gram2, gram3, D3)
 gram1 <- trainBackoffWeight(gram1, gram2, D2)
 
 cat("Pruning model\n")
-gram1 <- gram1[contCount>=0]
-gram2 <- gram2[contCount>=3]
-gram3 <- gram3[contCount>=2]
-gram4 <- gram4[freq>=2]
+#gram1 <- gram1[contCount>=0]
+#gram2 <- gram2[contCount>=3]
+#gram3 <- gram3[contCount>=2]
+#gram4 <- gram4[freq>=2]
 
 cat("1-grams", nrow(gram1), "\n2-grams", nrow(gram2), "\n3-grams", nrow(gram3),
     "\n4-grams", nrow(gram4), "\n")
 
-cat("Discount of ", D4, D3, D2, "\n")
+cat("Discount of ", D4, D3, D2, D1, "\n")
 
 #Models serialization
 cat("Writing models to disk\n")

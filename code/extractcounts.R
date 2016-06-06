@@ -61,7 +61,7 @@ text2ngram <- function(sentences, ngramOrders, minCounts) {
         #Split token into words
         colNames <- sapply(seq(1,order), function(s) paste0("word",s))
         ngrams <- tidyr::separate(ngrams,"token",colNames," ") %>% 
-                  dplyr::filter(freq>minC)
+                  dplyr::filter(freq>=minC)
         
         #Add to list
         ngramList[[sprintf("%d-gram",order)]] <- data.table(ngrams)
@@ -85,10 +85,13 @@ writeCounts <- function(ngram, fileName) {
 ###################
 # Main
 #
+SOURCES <- c("news")
+MINVOCABULARYCOUNT = 0
+
 #Read cleaned files
 sentences <- NULL
 for (src in SOURCES) {
-    fileName <- sprintf("%s.%s.txt", "en_US", src)
+    fileName <- sprintf("%s_%s_train.txt", "en_US", src)
     srcFile <- sprintf("%s/%s/%s", CLEANDIR, "en_US", fileName)
     if (is.null(sentences)) {
         sentences <- readSample(srcFile)
@@ -100,13 +103,11 @@ for (src in SOURCES) {
 #Build ngram frequency table
 cat("N-gram extraction\n")
 print("  --> Vocabulary extraction")
-gram1 <- text2ngram(sentences, ngramOrders = c(1), minCounts = c(3))[[1]]
+gram1 <- text2ngram(sentences, ngramOrders = c(1), minCounts = c(MINVOCABULARYCOUNT))[[1]]
 writeCounts(gram1,"vocabulary.txt")
-
-readline("Please check 'vocabulary.txt' file ")
+readline("Please check 'vocabulary.txt' file and then press <enter>")
 gram1 <- data.table(read.table("vocabulary.txt", header=T, allowEscapes = T, sep="\t",
                     stringsAsFactors = F))
-
 print(head(gram1))
 
 #Obfuscate unknown words
