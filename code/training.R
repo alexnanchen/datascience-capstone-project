@@ -259,6 +259,54 @@ getDiscount <- function(dtCounts, col="freq") {
 }
 
 #-----------------------------------------------------
+# Interpolate 'dtHigher' with 'dtLower'
+#-----------------------------------------------------
+interpolate <- function(dtLower, dtHigher) {
+    wIndicesLower <- grep("word*",names(dtLower))
+    wIndicesHigher <- grep("word*",names(dtHigher))
+    
+    cat("Get backoff weight from lower order\n")
+    #Indices for backoff context
+    mergeIndices = wIndicesHigher[-length(wIndicesHigher)]
+    #Actual names
+    namesHigher <- names(dtHigher)[mergeIndices]
+    namesLower <- names(dtLower)[wIndicesLower]
+    
+    #Merge
+    setkeyv(dtHigher, namesHigher )
+    setkeyv(dtLower, namesLower)
+    dtTmp <- suppressWarnings(merge(dtHigher, dtLower, by.x=namesHigher,
+                                      by.y = namesLower, all.x=T))
+    if("backoffWeight" %in% names(dtHigher))
+        dtHigher$lowerBOW <- dtTmp$backoffWeight.y
+    else
+        dtHigher$lowerBOW <- dtTmp$backoffWeight
+    
+    #NA normalization
+    naIndices <- which(is.na(dtHigher$lowerBOW))
+    dtHigher[naIndices]$lowerBOW <- 0
+    
+    cat("Get log prob from lower order\n")
+    #Indices for backoff context
+    mergeIndices = wIndicesHigher[-1]
+    #Actual names
+    namesHigher <- names(dtHigher)[mergeIndices]
+    #Merge
+    setkeyv(dtHigher, namesHigher )
+    
+    dtTmp <- suppressWarnings(merge(dtHigher, dtLower, by.x=namesHigher,
+                                    by.y = namesLower, all.x=T))
+    #Lower order probability should always exists has
+    #as higher order is superset of lower order
+    dtHigher$lowerLogprob <- dtTmp$logprob.y
+    
+    cat("Interpolate probabilities")
+    dtHigher$logprob <- log10((10^dtHigher$logprob) + (10^(dtHigher$lowerBOW+dtHigher$lowerLogprob)))
+    setkeyv(dtHigher, names(dtHigher)[wIndicesHigher])
+    return(dtHigher)
+}
+
+#-----------------------------------------------------
 # Write a n-gram model to disk
 #-----------------------------------------------------
 # param dt           : a data table
@@ -327,6 +375,11 @@ gram2 <- trainBackoffWeight(gram2, gram3, D3)
 
 #1-grams backoff weights
 gram1 <- trainBackoffWeight(gram1, gram2, D2)
+
+cat("Interpolating\n")
+gram2 <- interpolate(gram1,gram2)
+gram3 <- interpolate(gram2,gram3)
+gram4 <- interpolate(gram3,gram4)
 
 cat("Pruning model\n")
 #gram1 <- gram1[contCount>=0]

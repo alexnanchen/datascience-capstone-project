@@ -264,11 +264,12 @@ getNgramLogInterpolated <- function(wordsList, indice, model, maxorder) {
 #       dictionary  : the dictionary of unigrams
 #       maxorder    : the highest model order
 # return the joint log probability with oov count
-getSentenceLog <- function(strSentence, model, dictionary, maxorder, replaceUnk=T) {
+getSentenceLog <- function(strSentence, model, dictionary, maxorder, replaceUnk=T, interpolate=F) {
     #Some preparation
     wordsList <- strsplit(strSentence, "[ ]+")[[1]]
     if(replaceUnk)
         wordsList <- replaceUnknown(wordsList, dictionary)
+    
     #Start end tokens
     wordsList <- c("<s>", wordsList, "</s>")
     
@@ -277,7 +278,12 @@ getSentenceLog <- function(strSentence, model, dictionary, maxorder, replaceUnk=
     totalLog <- 0; oov<- 0
     #Do not select start symbol
     for (i in seq(2, length(wordsList))) {
-        logProb <- getNgramLog(wordsList, i, model, maxorder)
+        logProb <- NULL
+        if(!interpolate)
+            logProb <- getNgramLog(wordsList, i, model, maxorder)
+        else
+            logProb <- getNgramLogInterpolated(wordsList, i, model, maxorder)
+            
         if(is.null(logProb))
             oov = oov + 1
         else
