@@ -11,7 +11,7 @@ library(stringi)
 source("code/lm.R")
 
 READBUFFER       = 5000
-DEBUG            = T
+DEBUG            = F
 log              = NULL
 
 ###################
@@ -108,10 +108,11 @@ getBackoffWeight <- function(dtLower, backoffContext) {
 #-----------------------------------------------------
 # Display debug message and store a log
 #-----------------------------------------------------
-debug <- function(strMessage) {
+debug <- function(strMessage, toLog=T) {
     if(DEBUG) 
         cat(strMessage)
-    log <<- c(log, strMessage)
+    if (toLog)
+        log <<- c(log, strMessage)
 }
 
 #-----------------------------------------------------

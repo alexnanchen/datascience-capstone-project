@@ -5,7 +5,7 @@ MODELPRECISION   = 6
 DOUBLEPRECISION  = 1000000     #Six digits
 MINLOGPROB       = -99.999999
 MAXINT           = DOUBLEPRECISION * trunc(-round(MINLOGPROB))
-DEBUG            = T
+DEBUG            = F
 
 ###################
 # Implementation
