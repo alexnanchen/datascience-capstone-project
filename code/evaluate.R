@@ -53,7 +53,7 @@ dt4 <- readCompressed("gram4e.txt")
 dt4$stats <- as.numeric(dt4$stats)
 
 #One table
-model = rbindlist(list(dt1,dt2,dt3))
+model = rbindlist(list(dt1,dt2,dt3,dt4))
 
 #Ordered index
 setkey(model,ngram)
@@ -69,23 +69,26 @@ sentences <- read.table(testFile, allowEscapes = T, sep="|", header=F,
 #Unknown words replacement as a batch
 sentences <- updateUnknownWords(dictionary, sentences)
 
+logValue <- getNgramLogInterpolated(c("a", "good", "mellow"), 3, model, 4)
+print(logValue)
+
 #sentences = data.table(text="roy halladay said he began to get that certain feeling along")
 
-#Main work
-cat("Computing log probabilities per sentences\n")
-totalLog <- 0; nbw <- 0;oov <- 0
-count <- 0
-for (s in tail(sentences$text, n=1)) {
-    ret <- getSentenceLog(s, model, dictionary, 3, F)
-    #cat(ret$totalLog, s,"\n")
-    totalLog <- totalLog + ret$totalLog
-    nbw <- nbw + ret$nbw
-    oov <- oov + ret$oov
-    count <- count + 1
-    if (count %% 100 == 0)
-        cat("Done ", count, "sentences\n")
-}
-
-ppl <- 10^(-totalLog /(nbw - oov + count))
-cat("Total log:", totalLog, "- nb words:", nbw, "- oov:", oov, "nb sentences:", count, 
-    "- ppl:", ppl, "\n")
+# #Main work
+# cat("Computing log probabilities per sentences\n")
+# totalLog <- 0; nbw <- 0;oov <- 0
+# count <- 0
+# for (s in tail(sentences$text, n=1)) {
+#     ret <- getSentenceLog(s, model, dictionary, 3, F)
+#     #cat(ret$totalLog, s,"\n")
+#     totalLog <- totalLog + ret$totalLog
+#     nbw <- nbw + ret$nbw
+#     oov <- oov + ret$oov
+#     count <- count + 1
+#     if (count %% 100 == 0)
+#         cat("Done ", count, "sentences\n")
+# }
+# 
+# ppl <- 10^(-totalLog /(nbw - oov + count))
+# cat("Total log:", totalLog, "- nb words:", nbw, "- oov:", oov, "nb sentences:", count, 
+#     "- ppl:", ppl, "\n")
