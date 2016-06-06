@@ -11,7 +11,6 @@ source("code/mod.R")
 source("code/constants.R")
 source("code/lm.R")
 
-
 ###################
 # Implementation
 #
@@ -300,7 +299,7 @@ interpolate <- function(dtLower, dtHigher) {
     #as higher order is superset of lower order
     dtHigher$lowerLogprob <- dtTmp$logprob.y
     
-    cat("Interpolate probabilities")
+    cat("Interpolate probabilities\n")
     dtHigher$logprob <- log10((10^dtHigher$logprob) + (10^(dtHigher$lowerBOW+dtHigher$lowerLogprob)))
     setkeyv(dtHigher, names(dtHigher)[wIndicesHigher])
     return(dtHigher)
@@ -311,7 +310,7 @@ interpolate <- function(dtLower, dtHigher) {
 #-----------------------------------------------------
 # param dt           : a data table
 #       highestOrder : is it the top level model
-writeModel <- function(dt) {
+writeModel <- function(dt, fileName) {
     #Word merge
     wIndices <- grep("word*",names(dt))
     dt <- unite_(dt,"ngram", names(dt)[wIndices], sep=" ")
@@ -337,6 +336,8 @@ writeModel <- function(dt) {
 ###################
 # Main
 #
+PRUNE=F
+
 #Read counts files
 gram1 <- readCounts("counts1.txt")
 gram2 <- readCounts("counts2.txt")
@@ -361,7 +362,7 @@ ret <- trainContinuationProb(gram2, gram3)
 gram2 <- ret$dt; D2 <- ret$discount
 
 #1-grams discounted countinuation probabilities
-#Fixed vocabulary, no discount (see log10(1/42570)) or pruning
+#Fixed vocabulary, no discount
 cat("1 grams training\n")
 ret <- trainContinuationProb(gram1, gram2)
 gram1 <- ret$dt; D1 <- ret$discount
@@ -377,27 +378,32 @@ gram2 <- trainBackoffWeight(gram2, gram3, D3)
 gram1 <- trainBackoffWeight(gram1, gram2, D2)
 
 cat("Interpolating\n")
+#Careful of order
 gram2 <- interpolate(gram1,gram2)
 gram3 <- interpolate(gram2,gram3)
 gram4 <- interpolate(gram3,gram4)
 
-cat("Pruning model\n")
-#gram1 <- gram1[contCount>=0]
-#gram2 <- gram2[contCount>=3]
-#gram3 <- gram3[contCount>=2]
-#gram4 <- gram4[freq>=2]
+suffix = ""
+if (PRUNE) {
+    cat("Pruning model\n")
+    gram1 <- gram1[contCount>=0]
+    gram2 <- gram2[contCount>=3]
+    gram3 <- gram3[contCount>=2]
+    gram4 <- gram4[freq>=2]
+    suffix = "_pruned"
+}
 
 cat("1-grams", nrow(gram1), "\n2-grams", nrow(gram2), "\n3-grams", nrow(gram3),
     "\n4-grams", nrow(gram4), "\n")
 
-cat("Discount of ", D4, D3, D2, D1, "\n")
+cat("Discounts of ", D4, D3, D2, D1, "\n")
 
 #Models serialization
 cat("Writing models to disk\n")
-writeModel(gram1)
-writeModel(gram2)
-writeModel(gram3)
-writeModel(gram4)
+writeModel(gram1, sprintf("gram1%s.txt", suffix))
+writeModel(gram2, sprintf("gram2%s.txt", suffix))
+writeModel(gram3, sprintf("gram3%s.txt", suffix))
+writeModel(gram4, sprintf("gram4%s.txt", suffix))
 
 rmobj("fileName")
 rmobj("srcFile")
