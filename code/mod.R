@@ -24,6 +24,31 @@ runGC <- function() {
     for(i in seq(1,10)) gc()
 }
 
+#-----------------------------------------------------
+# Interpolate with lower probability
+#-----------------------------------------------------
+# MITLM interpolate probabilities.
+# Can be used to check that not interpolated values
+# match interpolated values.
+# see https://github.com/mitlm/mitlm/blob/master/src/KneserNeySmoothing.cpp
+interpolate <- function(highestProb, lowerProb, lowerBow) {
+    #No interpolated probability
+    if (highestProb == 0 && lowerProb == 0)
+        return(0)
+    
+    pLower <- 0
+    #No probability was found
+    if(lowerProb != 0)
+        pLower <- 10^(lowerBow+lowerProb)
+    
+    pHigher <- 0
+    #No probability was found
+    if(highestProb != 0)
+        pHigher <- 10^highestProb
+    
+    return(log10(pHigher+pLower))
+}
+
 ###################
 # Data
 #

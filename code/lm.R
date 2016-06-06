@@ -7,7 +7,7 @@ MODELPRECISION   = 6
 DOUBLEPRECISION  = 1000000     #Six digits
 MINLOGPROB       = -99.999999
 MAXINT           = DOUBLEPRECISION * trunc(-round(MINLOGPROB))
-DEBUG            = T
+DEBUG            = F
 
 ###################
 # Implementation
@@ -154,76 +154,6 @@ getNgramLog_ <- function(ngram, backoffWeight, model, prefix="   ") {
     return(getNgramLog_(ngram, backoffWeight + bow, model, paste(prefix,"  ")))
 }
 
-#-----------------------------------------------------
-# Interpolate all orders probabilities for 'ngram'
-#-----------------------------------------------------
-# The algorithm recusively goes down to unigram, then
-# it compute interpolation on its way back
-getNgramLogInterpolated_ <- function(ngram, model, prefix="   ") {
-    #Some preparation
-    wordsList <- strsplit(ngram," ")[[1]]
-    order <- length(wordsList)
-    cat(prefix, "Order:", order, "\n")
-    
-    #Stop condition
-    if (order == 1) {
-        if (isInModel(ngram, model)) {
-            logProb <- getLogValue(ngram,model)
-            if(DEBUG) cat(prefix, "Found ngram '",ngram,"', with logprob of", logProb, "\n")
-            return(logProb)
-        } else {
-            return(0)
-        }
-    }
-    
-    #Backoff
-    order <- order - 1
-    ngramLower <- paste(wordsList[-1], collapse=" ")
-    logProbLower <- getNgramLogInterpolated_(ngramLower, model, paste(prefix,"  "))
-    
-    #Interpolation
-    backoffContext <- paste(wordsList[-(length(wordsList))], collapse=" ")
-    bow <- 0
-    if (isInModel(backoffContext, model))
-        bow <- getBowValue(backoffContext, model)
-    
-    logProb <- 0
-    if (isInModel(ngram, model))
-        logProb <- getLogValue(ngram,model)
-    else
-        if(DEBUG) cat(prefix, "Not found '", ngram, "'\n")
-    
-    if(DEBUG) cat(prefix, "Lower logprob =", logProbLower, "bow=", bow, "(", backoffContext, ")",
-                  " and order logprob", logProb, "\n")
-    
-    return(interpolate(logProb, logProbLower, bow))
-}
-
-#-----------------------------------------------------
-# Interpolate with lower probability
-#-----------------------------------------------------
-# MITLM interpolate probabilities.
-# Can be used to check that not interpolated values
-# match interpolated values.
-# see https://github.com/mitlm/mitlm/blob/master/src/KneserNeySmoothing.cpp
-interpolate <- function(highestProb, lowerProb, lowerBow) {
-    #No interpolated probability
-    if (highestProb == 0 && lowerProb == 0)
-        return(0)
-    
-    pLower <- 0
-    #No probability was found
-    if(lowerProb != 0)
-        pLower <- 10^(lowerBow+lowerProb)
-    
-    pHigher <- 0
-    #No probability was found
-    if(highestProb != 0)
-        pHigher <- 10^highestProb
-    
-    return(log10(pHigher+pLower))
-}
-
 ###################
 # Public interface
 #
@@ -242,21 +172,6 @@ getNgramLog <- function(wordsList, indice, model, maxorder) {
 }
 
 #-----------------------------------------------------
-# Get log probability of word at indice 'indice'
-#-----------------------------------------------------
-# param wordsList : a character vector
-#       indice    : an indice into the vector
-#       model     : a data table model
-#       maxorder  : the highest model order
-# return the log prob of word at indice 'indice'
-getNgramLogInterpolated <- function(wordsList, indice, model, maxorder) {
-    ngram <- getNgramFromList(wordsList, indice, maxorder)
-    if(DEBUG) cat("    --> Get log probability for '", ngram, "'\n")
-    return(getNgramLogInterpolated_(ngram, model))
-}
-
-
-#-----------------------------------------------------
 # Get joint probability of a sequence of words
 #-----------------------------------------------------
 # param strSentence : a character vector
@@ -264,7 +179,7 @@ getNgramLogInterpolated <- function(wordsList, indice, model, maxorder) {
 #       dictionary  : the dictionary of unigrams
 #       maxorder    : the highest model order
 # return the joint log probability with oov count
-getSentenceLog <- function(strSentence, model, dictionary, maxorder, replaceUnk=T, interpolate=F) {
+getSentenceLog <- function(strSentence, model, dictionary, maxorder, replaceUnk=T) {
     #Some preparation
     wordsList <- strsplit(strSentence, "[ ]+")[[1]]
     if(replaceUnk)
@@ -278,12 +193,8 @@ getSentenceLog <- function(strSentence, model, dictionary, maxorder, replaceUnk=
     totalLog <- 0; oov<- 0
     #Do not select start symbol
     for (i in seq(2, length(wordsList))) {
-        logProb <- NULL
-        if(!interpolate)
-            logProb <- getNgramLog(wordsList, i, model, maxorder)
-        else
-            logProb <- getNgramLogInterpolated(wordsList, i, model, maxorder)
-            
+        logProb <- getNgramLog(wordsList, i, model, maxorder)
+        
         if(is.null(logProb))
             oov = oov + 1
         else
