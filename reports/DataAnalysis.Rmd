@@ -1,7 +1,7 @@
 ---
-title: "Exploratory data analysis"
+title: "Exploratory data analysis data science capstone project"
 author: "Alexandre Nanchen"
-date: "01 June 2016"
+date: "07 June 2016"
 output:
   html_document:
     fig_caption: yes
@@ -84,7 +84,7 @@ totalLines <- as.integer(tw[[1]][2]) + as.integer(bl[[1]][2]) + as.integer(nw[[1
 totalWords <- as.integer(tw[[1]][3]) + as.integer(bl[[1]][3]) + as.integer(nw[[1]][3])
 ```
 
-In total, **`r format(totalLines,big.mark="'")`** lines **`r format(totalWords,big.mark="'")`** words.
+In total, **`r format(totalLines,big.mark="'")`** sentences and **`r format(totalWords,big.mark="'")`** words.
 
 # Data preparation
 Before modeling the language, some data transformations have been applied to the sampled data.
@@ -120,7 +120,7 @@ nbUnigrams <- length(table(unigrams))
 In total, there are **`r format(nbUnigrams, big.mark="'")`** unique words.
 
 Here is a words cloud of words occurring more than 50 times.
-```{r, echo=F, fig.height=4}
+```{r, echo=F, fig.height=5, warning=F, message=F}
 c <- Corpus(VectorSource(paste(sentences,collapse=" ")))
 td <- DocumentTermMatrix(c)
 wordcloud(c,scale=c(6,1), rot.per=0.35, min.freq=50, use.r.layout=F,
@@ -157,7 +157,7 @@ By coverage we mean the percentage of observed N-grams (from the text sentences)
 given N-gram order (2-grams, 3-grams, ...).
 
 For example if the selected vocabulary is 5 unique words, the maximum number of bigram is 5*5 = 25. Then we can compare
-this number with the observed bigrams. Suppose we observe 5 unique bigrams, then the bigram coverage is 5 for 25 or 20%.
+this number with the observed bigrams. Suppose we observe 5 unique bigrams, the bigram coverage is 5 for 25 or 20%.
 
 Now lets check the N-gram coverage of the sampled text.
 
@@ -209,4 +209,4 @@ contained in the observed text. Reducing the number of keywords will help to hav
 good predictive quality.
 
 Hence, the next steps are to select a list of vocabulary words and build a back-off model for 3,2,1 grams projected
-on the selected vocabulary.
+on a selected vocabulary.

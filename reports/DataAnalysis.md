@@ -1,6 +1,6 @@
-# Exploratory data analysis
+# Exploratory data analysis data science capstone project
 Alexandre Nanchen  
-01 June 2016  
+07 June 2016  
 
 
 
@@ -43,7 +43,7 @@ A divide and conquer method associated with random sampling has been chosen:
 
 
 
-In total, **299'934** lines **5'941'264** words.
+In total, **299'934** sentences and **5'941'264** words.
 
 # Data preparation
 Before modeling the language, some data transformations have been applied to the sampled data.
@@ -84,7 +84,7 @@ By coverage we mean the percentage of observed N-grams (from the text sentences)
 given N-gram order (2-grams, 3-grams, ...).
 
 For example if the selected vocabulary is 5 unique words, the maximum number of bigram is 5*5 = 25. Then we can compare
-this number with the observed bigrams. Suppose we observe 5 unique bigrams, then the bigram coverage is 5 for 25 or 20%.
+this number with the observed bigrams. Suppose we observe 5 unique bigrams, the bigram coverage is 5 for 25 or 20%.
 
 Now lets check the N-gram coverage of the sampled text.
 
@@ -122,4 +122,4 @@ contained in the observed text. Reducing the number of keywords will help to hav
 good predictive quality.
 
 Hence, the next steps are to select a list of vocabulary words and build a back-off model for 3,2,1 grams projected
-on the selected vocabulary.
+on a selected vocabulary.
