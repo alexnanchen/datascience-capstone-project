@@ -1,5 +1,6 @@
 library(dplyr)
 library(data.table)
+library(xtable)
 library(wordcloud)
 
 source("code/predictapp.R")
@@ -17,7 +18,7 @@ shinyServer(function(input, output) {
          if(input$predictButton > 0 && as.integer(input$options==1)) {
              head(ret()$dfResult, n=10)
          }
-    })
+    },align = c("c","c","c","c"))
     
     output$verbose <- renderText({
         if(input$predictButton > 0 && as.integer(input$options)==1) {
@@ -37,5 +38,10 @@ shinyServer(function(input, output) {
                       random.order = F)
         }
     })
+    
+    output$results <- renderTable(
+        dt <- read.table("www/evaluation.txt", sep="|", row.names = 1),
+        align = c("l","c","c","c","c")
+    )
 })
 

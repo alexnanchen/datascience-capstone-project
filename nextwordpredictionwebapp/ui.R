@@ -43,8 +43,8 @@ shinyUI(
           ),
           tabPanel("Help",
                    mainPanel(
-                        div(id="trace", class="well-trace",
-                           HTML("<p>The trace of the backing off algorithm can be a little challenging to understand.
+                        div(id="trace", class="well-large",
+                           HTML("<p></p><p>The trace of the backing off algorithm can be a little challenging to understand.
                                  Here is a detail explanation of the next word prediction for:</p>
                                  <p class='keywords'><b>\"the rest of\"</b></p>
                                  <p class='center'><img src='algorithm.jpg'></p>
@@ -68,18 +68,21 @@ shinyUI(
                    )),
           tabPanel("Algorithm",
                    mainPanel(
-                       div(id="models", class="well",
+                       div(id="models", class="well-large",
                            HTML("<h2>N-gram model</h2>
-                                 <p>The deployed model is a 4-grams Kneser-Ney backoff model with a vocabulary
-                                    of 41'376 words, including the '<i>&lt;unk&gt;</i>' symbol for unknown words.
-                                    Here is a details of the counts:</p>
-                                      <ul><li>1-gram: 41376 entries</li>
-                                          <li>2-gram: 164534 entries</li>
-                                          <li>3-gram: 331930 entries</li>
-                                          <li>4-gram: 183427 entries</li>
+                                 <p>The deployed model is a <b>4-grams Kneser-Ney interpolated </b> model with a vocabulary
+                                    of 50'217 words, including the '<i>&lt;unk&gt;</i>' symbol for unknown words.</p>
+                                 <p>The model parameters and its performance have the same values as the one obtained
+                                    with the <a target='_blank' href='https://github.com/mitlm/mitlm'>MITLM toolkit</a>
+                                    when setting the smoothing parameter to <b>FixKN</b>.</p>
+                                  <p> Here is a details of the counts:</p>
+                                      <ul><li>1-gram: 50'217</li>
+                                          <li>2-grams: 1'615'062</li>
+                                          <li>3-grams: 3'949'634</li>
+                                          <li>4-grams: 4'979'310</li>
                                       </ul>
                                  <p class='doc'>In order to save memory, part of the text composing the n-gram is converted into
-                                    a signed integer. This allows for a reduction of memory footpring of a factor of 2.8.
+                                    a signed integer. This allows for a reduction of memory footpring of a factor of <b>2.8</b>.
                                  </p>"),
                            HTML("<h2>Algorithm</h2>
                                  <p>The following steps are performed in order to select the best words matches:
@@ -92,10 +95,53 @@ shinyUI(
                                         <li>Keep all predictions of all orders with associated scores</li>
                                         <li>Average all available scores for each word</li>
                                         <li>Normalize top 10 scores to sum to 100%</li>
-                                        <li>Display results by decreasing model order</li>
+                                        <li>Display results by decreasing score and model order</li>
                                     </ol>
                                  </p>")
                            )
                        )
+                   ),
+          tabPanel("Evaluation",
+                   mainPanel(
+                       div(id="evaluation", class="well-large shiny-html-output",
+                           HTML("<h2 style=margin-bottom:20px>Model evaluation</h2><br>
+                                 <p>Here is a summary of the perplexity evaluation of different model
+                                    against different test sets:</p><br><br>"),
+                           tableOutput("results"),
+                           HTML("<p>The unpruned model contains:
+                                    <ul><li>2-grams: 1'615'062</li>
+                                        <li>3-grams: 3'949'634</li>
+                                        <li>4-grams: 4'979'310</li>
+                                    </ul>
+                                 </p>
+                                 <p>The pruned model contains:
+                                    <ul><li>2-grams: 237'527</li>
+                                        <li>3-grams: 429'717</li>
+                                        <li>4-grams: 220'105</li>
+                                    </ul>
+                                 </p>
+                                 <p>Both models have a vocabulary of size <b>50'217</b> words.</p>
+                                 <p>From the table we can see that the best perplexity (330.15) is obtained
+                                    from the unpruned interpolated model while the deployed model
+                                    achieves a perplexity of <b>449.74</b>.</p>
+                                 <p>The pruning was done by removal of n-grams belows
+                                    a count threshold and need some improving.</p>"
+                            )
+                       )
                    )
+          ),
+          tabPanel("Bibliography",
+                   mainPanel(
+                       div(id="bibliography", class="well-large shiny-html-output",
+                           HTML("<h2 style=margin-bottom:20px>Bibliography</h2><br>
+                                 <p>Here is a list of the main resources used to understand
+                                    and implement the algorithm:</p>
+                                 <p></p>
+                                 <p></p>
+                                 <p></p>
+                                 <p></p>
+                                ")
+                       )
+                   )
+          )
 )))

@@ -63,14 +63,14 @@ h2 {
     border-radius: 4px;
     box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05) inset;
     margin-bottom: 20px;
-    min-height: 20px;
+    min-height: 10px;
     padding: 19px;
     width: 520px;
 }
 
-.well-trace {
+.well-large {
     position:absolute;
-    top:-10px;
+    top:-20px;
     left:-100px;
     width: 700px;
     background-color: #f5f5f5;
@@ -78,7 +78,7 @@ h2 {
     border-radius: 4px;
     box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05) inset;
     margin-bottom: 20px;
-    padding: 19px;
+    padding: 0px 19px 19px 19px;
 }
 
 
@@ -122,7 +122,7 @@ h2 {
 }
 
 .doc {
-    margin-bottom:5em
+    margin-bottom:3em
 }
 
 .pbm {
@@ -143,10 +143,37 @@ h2 {
     width:75%;
 }
 
+.table-bordered {
+    border: 1;
+}
+.table {
+    margin-bottom: 20px;
+    max-width: 100%;
+    width: 100%;
+}
+
+table.data {
+    width: 80%;
+}
+
+.table-bordered > tbody > tr > td, 
+.table-bordered > tfoot > tr > td,
+.table-bordered > thead > tr > td {
+    border: 0 none;
+}
+
+.table-bordered > tbody > tr > th,
+.table-bordered > tfoot > tr > th,
+.table-bordered > thead > tr > th {
+    border: 0 none;
+    text-align: center;
+}
+
+
 #topTitle {
      position:absolute;
      top: 2px;
-     width: 200px;
+     width: 245px;
      text-align: center;
 }
 
@@ -169,9 +196,9 @@ h2 {
     left: 2px;
 }
 
-#models {
-    position:absolute;
-    top:-10px;
-    left:-50px;
-    width:600px;
+
+#bootstrap-overrides table, th, td {
+    border: 0;
 }
+
+

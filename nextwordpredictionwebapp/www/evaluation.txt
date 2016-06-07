@@ -1,0 +1,5 @@
+Twitter|Blogs|News|Average
+Not pruned, not interpolated|397.2033|415.0438|482.8296|431.6922
+Not pruned, interpolated|303.7503|312.8302|373.8806|330.1537
+Pruned, not interpolated|436.3207|465.2308|580.4592|494.0036
+Pruned, interpolated|396.122|421.1653|531.9441|449.7438
