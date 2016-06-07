@@ -103,6 +103,7 @@ readModel <- function(fileName, order, evaluate=F) {
             dt <- readBufferEvaluate(fileName, skip, dt)
             
         skip <- skip + READBUFFER
+        cat("Done ", i, "buffer(s)\n")
     } 
     
     assert(nrow(dt) == nbLines)
@@ -161,8 +162,8 @@ readBuffer <- function(fileName, skip, df, nbWords) {
 #
 readBufferEvaluate <- function(fileName, skip, df) {
     #Read in memory buffer
-    dfBuffer <- tbl_df(read.table(fileName, allowEscapes = T, sep="|", 
-                                  stringsAsFactors = F, nrow=READBUFFER, skip=skip))
+    dfBuffer <- tbl_df(fread(fileName, sep="|", stringsAsFactors = F, 
+                    nrow=READBUFFER, skip=skip, encoding = "UTF-8"))
     
     #Compress values to save memory space
     dfBuffer <- data.table(compressBuffer(dfBuffer))
