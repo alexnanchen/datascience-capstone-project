@@ -335,7 +335,7 @@ writeModel <- function(dt, fileName) {
 ###################
 # Main
 #
-PRUNE=F
+PRUNE=T
 
 #Read counts files
 gram1 <- readCounts("counts1.txt")
