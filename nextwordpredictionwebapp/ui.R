@@ -136,10 +136,20 @@ shinyUI(
                            HTML("<h2 style=margin-bottom:20px>Bibliography</h2><br>
                                  <p>Here is a list of the main resources used to understand
                                     and implement the algorithm:</p>
-                                 <p></p>
-                                 <p></p>
-                                 <p></p>
-                                 <p></p>
+                                 <p>Stanley F. Chen and Joshua Goodman. 1998. <a target='_blank' href='http://www.speech.sri.com/projects/srilm/manpages/pdfs/chen-goodman-tr-10-98.pdf'>An Empirical Study of Smoothing Techniques for Language Modeling</a></p>
+                                 <p>Daniel Jurafsky & James H. Martin. 2014. <a target='_blank' href='https://lagunita.stanford.edu/c4x/Engineering/CS-224N/asset/slp4.pdf'>Speech and Language Processing Chapter 4 N-Grams</a></p>
+                                 <p>Jon Gauthier. 2014. <a target='_blank' href='http://www.foldl.me/2014/kneser-ney-smoothing/'>Kneser-Ney smoothing explained</a> </p>
+                                 <p>Roger Levy. Winter 2008. <a target='_blank' href='http://idiom.ucsd.edu/~rlevy/lign256/winter2008/kneser_ney_mini_example.pdf'>Kneser-Ney mini-example</a>. Linguistics/CSE 256, page 2</p>
+                                ")
+                       )
+                   )
+          ),
+          tabPanel("Resources",
+                   mainPanel(
+                       div(id="resources", class="well-large shiny-html-output",
+                           HTML("<h2 style=margin-bottom:20px>Resources</h2><br>
+                                <p>The code is publicly available on <a target='_blank' href='https://github.com/alexnanchen/datascience-capstone-project.git'>github</a>.</p>
+                                <p>A Pitch Deck is available on RPubs</p>
                                 ")
                        )
                    )
