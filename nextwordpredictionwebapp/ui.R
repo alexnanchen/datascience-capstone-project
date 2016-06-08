@@ -123,7 +123,7 @@ shinyUI(
                    mainPanel(
                        div(id="evaluation", class="well-large shiny-html-output",
                            HTML("<h2 style=margin-bottom:20px>Model evaluation</h2><br>
-                                 <p>Here is a summary of the perplexity evaluation of different model
+                                 <p>Here is a summary of the perplexity measures for different models
                                     against different test sets:</p><br><br>"),
                            tableOutput("results"),
                            HTML("<p>The unpruned model contains:
@@ -142,7 +142,7 @@ shinyUI(
                                  <p>From the table we can see that the best perplexity (330.15) is obtained
                                     from the unpruned interpolated model while the deployed model
                                     achieves a perplexity of <b>449.74</b>.</p>
-                                 <p>The pruning was done by removal of n-grams belows
+                                 <p>The pruning was done by removal of n-grams below
                                     a count threshold and need some improving.</p>"
                             )
                        )
