@@ -129,6 +129,10 @@ h2 {
     margin-bottom:3em
 }
 
+.pbmsmall {
+    margin-bottom:1em
+}
+
 .keywords {
     top:-20px;
     left:-50px;
@@ -143,9 +147,21 @@ h2 {
     width:75%;
 }
 
+.centerfull {
+    margin:0.1em auto 0.1em auto;
+    text-align:center;
+}
+
+.centerfullmargin {
+    margin:0.1em auto 0.1em auto;
+    text-align:center;
+    margin-bottom:1em;
+}
+
 .table-bordered {
     border: 1;
 }
+
 .table {
     margin-bottom: 20px;
     max-width: 100%;
@@ -169,12 +185,20 @@ table.data {
     text-align: center;
 }
 
+.highlight {
+    color:#E18A07;
+}
 
 #topTitle {
      position:absolute;
      top: 2px;
      width: 245px;
      text-align: center;
+}
+
+#welcome {
+    width: 600px;
+    
 }
 
 #summary {
@@ -195,7 +219,6 @@ table.data {
     top: 2px;
     left: 2px;
 }
-
 
 #bootstrap-overrides table, th, td {
     border: 0;

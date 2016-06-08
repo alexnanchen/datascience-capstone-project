@@ -37,7 +37,25 @@ shinyUI(
                                       htmlOutput("verbose")),
                 
                      conditionalPanel(condition="input.predictButton>0 && input.options==2",
-                                      plotOutput("wordCloud", width="800px"))
+                                      plotOutput("wordCloud", width="800px")),
+                     
+                     conditionalPanel(condition="input.predictButton==0",
+                                        div(id="welcome",
+                                            HTML("<h2 class='centerfull'>Welcome to the</h2>
+                                                  <h2 class='centerfullmargin'>Next Word Prediction Web App!</h2>
+                                                  <p class='pbmsmall'>This application is part of the Capstone Project of the 
+                                                      <a target='_blank' href='https://www.coursera.org/specializations/jhu-data-science'>
+                                                         Data Science Specialization</a> on Coursera from Johns Hopkins University.</p>
+                                                  <p class='pbmsmall'>Using the <span class='highlight'>input box</span> on the left, you can enter a sentence or part of sentence and see
+                                                      which word the algorithm will predict as a next word.</p>
+                                                  <p class='pbmsmall'><span class='highlight'>A words cloud</span> is also available to see the 50 potential most frequent words that
+                                                      will complete your text input.</p>
+                                                  <p class='pbmsmall'>A fun think to do is to try building a sentence using the predicted words.</p>
+                                                  <p class='pbmsmall'>Please refer to the top menu for help and other information.</p>
+                                                  <p class='pbmsmall'>Have fun!</p>
+                                                 ")
+                                        )
+                                      )
                   )
               )
           ),
@@ -69,7 +87,7 @@ shinyUI(
           tabPanel("Algorithm",
                    mainPanel(
                        div(id="models", class="well-large",
-                           HTML("<h2>N-gram model</h2>
+                           HTML("<h2 style=margin-bottom:20px>N-gram model</h2>
                                  <p>The deployed model is a <b>4-grams Kneser-Ney interpolated </b> model with a vocabulary
                                     of 50'217 words, including the '<i>&lt;unk&gt;</i>' symbol for unknown words.</p>
                                  <p>The model parameters and its performance have the same values as the one obtained
@@ -84,7 +102,7 @@ shinyUI(
                                  <p class='doc'>In order to save memory, part of the text composing the n-gram is converted into
                                     a signed integer. This allows for a reduction of memory footpring of a factor of <b>2.8</b>.
                                  </p>"),
-                           HTML("<h2>Algorithm</h2>
+                           HTML("<h2 style=margin-bottom:20px>Algorithm</h2>
                                  <p>The following steps are performed in order to select the best words matches:
                                     <ol><li>Prepare inputed words
                                          <ul><li>Lower case all words</li>
@@ -144,12 +162,13 @@ shinyUI(
                        )
                    )
           ),
-          tabPanel("Resources",
+          tabPanel("Code and other",
                    mainPanel(
                        div(id="resources", class="well-large shiny-html-output",
                            HTML("<h2 style=margin-bottom:20px>Resources</h2><br>
                                 <p>The code is publicly available on <a target='_blank' href='https://github.com/alexnanchen/datascience-capstone-project.git'>github</a>.</p>
-                                <p>A Pitch Deck is available on RPubs</p>
+                                <p>A <a target='_blank' href=''>Pitch Deck</a> is also available.</p>
+                                <p>During the specialization many data analyses where performed. You can find them on <a target='_blank' href='http://rpubs.com/alexnanchen'>RPubs</a>.
                                 ")
                        )
                    )
