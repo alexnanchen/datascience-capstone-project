@@ -1,40 +1,15 @@
----
-title       : Word prediction pitch
-subtitle    : Web application for data
-author      : Alexandre Nanchen
-job         : 
-framework   : html5slides   # {io2012, html5slides, shower, dzslides, ...}
-highlighter : highlight.js  # {highlight.js, prettify, highlight}
-hitheme     : tomorrow      # 
-widgets     : []            # {mathjax, quiz, bootstrap}
-mode        : selfcontained # {standalone, draft}
-knit        : slidify::knit2slides
+Next word prediction Web App
+============================
+author: Alexandre Nanchen
+date: July 2016
+css: style.css
 
----
-
-## &nbsp;
-<div id="outer" style="position:relative; top:-175px">  
-    <h1>Next word prediction Web App</h1>
-    <hr>
-    <h3>Data-science Capstone project</h3>
-    <h4>Alexandre Nanchen</h4>
-    <img id="logos"style="margin-left:40px;margin-top:80px;" src="images/logos.png">
+<div id="titlelogos"> 
+    <img id="logos" src="pitchdeck-figure/logos.png">
 </div>
 
-<style>
-.slides > article {
-    color: rgb(102, 102, 102);
-    font-family: "Open Sans",Arial,sans-serif;
-    font-size: 25px;
-    letter-spacing: -1px;
-    line-height: 36px;
-}
-</style>
-
---- .class 
-
-## The task
-
+The task
+========
 1. Next word prediction using statistical N-gram models
 2. Model implementation and evaluation
 3. Challenges
@@ -44,10 +19,8 @@ knit        : slidify::knit2slides
     - Prediction reactivity
     - Robustness to unknown words
 
----
-
-## Features highlight
-
+Features highlight
+==================
 1. Training
     - HC corpora data: blogs, news and twitter (> 100 Mio words) 
     - Vocabulary selection to retain 90% of the occurences
@@ -61,10 +34,8 @@ knit        : slidify::knit2slides
 
 The full evaluation results are on the Web App.
 
----
-
-### Predictive algorithm
-
+Predictive algorithm
+====================
 1. Model compression during loading trough N-gram context hashing
 2. Memory footpring reduction of a factor of 2.82
 3. Selection of most probable words for each N-gram order using backoff weights and continuation probabilities
@@ -73,9 +44,8 @@ The full evaluation results are on the Web App.
 
 For a detailed description, see the Algorithm tab on the Web App.
 
----
-
-### Word prediction web app
+Word prediction web app
+=======================
 1. Top 10 words display
 2. Verbose mode to see the algorithm in action
 3. Words cloud display to see the 50 most frequent words
@@ -83,6 +53,5 @@ For a detailed description, see the Algorithm tab on the Web App.
 
 [Next word prediction web application](https://alexnanchen.shinyapps.io/nextwordpredictionwebapp/)
 
-<img style="margin-left:0px;margin-top:0px;width:800px;height:300px" src="images/overview.png">
-
+<img style="margin-left:0px;margin-top:0px;width:800px;height:300px" src="pitchdeck-figure/overview.png">
 
