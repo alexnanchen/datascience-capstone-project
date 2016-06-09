@@ -167,7 +167,7 @@ shinyUI(
                        div(id="resources", class="well-large shiny-html-output",
                            HTML("<h2 style=margin-bottom:20px>Resources</h2><br>
                                 <p>The code is publicly available on <a target='_blank' href='https://github.com/alexnanchen/datascience-capstone-project.git'>github</a>.</p>
-                                <p>A <a target='_blank' href=''>Pitch Deck</a> is also available.</p>
+                                <p>A <a target='_blank' href='http://rpubs.com/alexnanchen/capstonepitchdeck'>Pitch Deck</a> is also available.</p>
                                 <p>During the specialization many data analyses where performed. You can find them on <a target='_blank' href='http://rpubs.com/alexnanchen'>RPubs</a>.
                                 ")
                        )
