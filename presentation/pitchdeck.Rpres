@@ -29,7 +29,7 @@ Features highlight
     - KNeser-Ney interpolated model of order 4 with fix smoothing
     - Model pruning
 2. Evaluation
-    - Model and perplexity comparison with <a href='https://github.com/mitlm/mitlm'>MITLM</a> open source toolkit
+    - Model and perplexity comparison with <a target="_blank" href='https://github.com/mitlm/mitlm'>MITLM</a> open source toolkit
     - Perplexity comparison per sources (Twitter, Blogs and news) and model type
 
 The full evaluation results are on the Web App.
